@@ -1,0 +1,60 @@
+{
+  "version": 1,
+  "disable_existing_loggers": false,
+  "formatters": {
+    "simple": {
+      "format": "%(levelname)s - %(module)s - %(name)s - %(message)s"
+    },
+    "detailed": {
+      "format": "[%(levelname)s | %(module)s | L%(lineno)d]  %(asctime)s - %(name)s - %(message)s",
+      "datefmt": "%Y-%m-%dT%H:%M:%S%z"
+    },
+    "json": {
+      "()": "src.common.logging.formatters.MyJSONFormatter",
+      "fmt_keys": {
+        "level": "levelname",
+        "message": "message",
+        "timestamp": "timestamp",
+        "logger": "name",
+        "module": "module",
+        "function": "funcName",
+        "line": "lineno",
+        "thread_name": "threadName"
+      }
+    }
+  },
+  "handlers": {
+    "stdout": {
+      "class": "logging.StreamHandler",
+      "formatter": "simple"
+    },
+    "jsonl": {
+      "class": "logging.handlers.RotatingFileHandler",
+      "level": "INFO",
+      "filename": "logs/my_app.log.jsonl",
+      "formatter": "json",
+      "maxBytes": 10000000,
+      "backupCount": 3
+    },
+    "file": {
+      "class": "logging.handlers.RotatingFileHandler",
+      "level": "INFO",
+      "filename": "logs/my_app.log",
+      "formatter": "detailed",
+      "maxBytes": 10000000,
+      "backupCount": 3
+    }
+  },
+  "loggers": {
+    "root": {
+      "level": "INFO",
+      "handlers": ["jsonl", "stdout", "file"]
+    },
+    "my_app": {
+      "level": "INFO"
+    },
+    "graph": {
+      "level": "INFO"
+    }
+  }
+}
