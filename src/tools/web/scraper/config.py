@@ -18,7 +18,7 @@ class ScraperSettings(BaseSettings):
 
     # Content filtering settings
     pruning_threshold: float = 0.2
-    pruning_threshold_type: str = "dynamic"
+    pruning_threshold_type: str = "fixed"
 
     # Markdown generation options
     ignore_links: bool = True
@@ -27,11 +27,11 @@ class ScraperSettings(BaseSettings):
     include_sup_sub: bool = True
 
     # Crawler settings
-    exclude_external_links: bool = True
+    exclude_external_links: bool = False
     exclude_social_media_links: bool = True
     exclude_external_images: bool = True
     process_iframes: bool = True
-    remove_overlay_elements: bool = True
+    remove_overlay_elements: bool = False
     excluded_tags: List[str] = ["form", "header", "footer", "nav"]
     cache_mode: CacheMode = CacheMode.BYPASS
 
