@@ -42,7 +42,7 @@ class SearXNGSearch:
                 raise Exception("Invalid response structure from SearXNG")
 
             # Filter out image results
-            general_results: List[SearXNGSearchResult] = [
+            general_results = [
                 result for result in data["results"] if not result.get("img_src")
             ]
 
@@ -56,12 +56,16 @@ class SearXNGSearch:
                     )
                 ]
 
-            return {"results": general_results}
+            general_results: List[SearXNGSearchResult] = [
+                SearXNGSearchResult(**result) for result in general_results
+            ]
+
+            return SearXNGSearchResponse(results=general_results)  # type: ignore
 
         except Exception as e:
             print(f"Error: {e}")
 
-            return {"results": [], "suggestions": []}
+            return SearXNGSearchResponse(results=[])  # type: ignore
 
     def _check_domain_filters(
         self, url: str, include_domains: List[str], exclude_domains: List[str]

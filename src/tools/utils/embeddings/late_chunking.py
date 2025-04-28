@@ -5,7 +5,7 @@ import numpy as np
 
 def late_chunking(
     model, tokenizer, original_text: str, chunks: List[str], passage_adapter_mask=None
-):
+) -> np.ndarray:
     new_text = model._task_instructions["retrieval.passage"] + original_text
     tokenization = tokenizer(new_text, return_tensors="pt").to(model.device)
     with torch.inference_mode():
@@ -41,7 +41,7 @@ def long_late_chunking(
     chunks: List[str],
     max_tokens: int = 4096,
     overlap_size: int = 512,
-):
+) -> np.ndarray:
     """Implements Long Late Chunking for encoding long text documents"""
     save_res = []
     text = "\n\n".join(chunks)
