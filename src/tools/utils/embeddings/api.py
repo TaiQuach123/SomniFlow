@@ -7,6 +7,29 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
+async def get_query_embeddings(chunks: List[str]) -> np.ndarray:
+    base_url = "https://api.jina.ai/v1/embeddings"
+    api_key = os.getenv("JINA_API_KEY")
+
+    headers = {"Content-Type": "application/json", "Authorization": f"Bearer {api_key}"}
+
+    data = {
+        "model": "jina-embeddings-v3",
+        "task": "retrieval.query",
+        "input": chunks,
+    }
+
+    async with httpx.AsyncClient() as client:
+        data = await client.post(base_url, headers=headers, json=data)
+        embeddings = np.array(
+            [
+                data.json()["data"][i]["embedding"]
+                for i in range(len(data.json()["data"]))
+            ]
+        )
+        return embeddings
+
+
 async def get_passage_embeddings(chunks: List[str]) -> np.ndarray:
     base_url = "https://api.jina.ai/v1/embeddings"
     api_key = os.getenv("JINA_API_KEY")
