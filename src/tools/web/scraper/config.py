@@ -30,8 +30,8 @@ class ScraperSettings(BaseSettings):
     exclude_external_links: bool = False
     exclude_social_media_links: bool = True
     exclude_external_images: bool = True
-    process_iframes: bool = True
-    remove_overlay_elements: bool = False
+    process_iframes: bool = False
+    remove_overlay_elements: bool = True
     excluded_tags: List[str] = ["form", "header", "footer", "nav"]
     cache_mode: CacheMode = CacheMode.BYPASS
 

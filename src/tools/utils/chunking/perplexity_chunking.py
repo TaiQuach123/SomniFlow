@@ -1,5 +1,5 @@
 from transformers import AutoModelForCausalLM, AutoTokenizer
-from lmchunker.chunker import chunker
+from src.lmchunker.chunker import chunker
 
 from dotenv import load_dotenv
 

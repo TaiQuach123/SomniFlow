@@ -12,52 +12,76 @@ Run SearXNG:
 docker run --rm -d -p 8080:8080 -v ./config/searxng-settings.yml:/etc/searxng/settings.yml -e "BASE_URL=http://localhost:8080/" -e "INSTANCE_NAME=my-instance" searxng/searxng
 ```
 
-```
-import nltk
-nltk.download('punkt')
-nltk.download('punkt_tab')
-```
 
-Code Structure:
-
-# Project Structure
+## Project Structure
 
 ```
 multi-agent-system/
-├── config/                          # Configuration
-│   ├── logging_dict_config.json     # Logging configuration
-│   └── searxng-settings.yml        # SearXNG search engine settings
+├── config/                          
+│   ├── logging_dict_config.json     # Logging configuration settings
+│   └── searxng-settings.yml        # SearXNG search engine configuration
 │
 ├── src/
 │   ├── agents/                      # Multi-agent system components
 │   │   ├── base/                   # Base classes and shared components
-│   │   ├── factor/                 # Factor agent implementation
-│   │   ├── harm/                   # Harm agent implementation
-│   │   ├── response/               # Response agent
-│   │   ├── suggestion/             # Suggestion agent
-│   │   └── supervisor/             # Supervisor agent
+│   │   │   └── models.py          # Common models like TaskHandlerOutput
+│   │   │
+│   │   ├── factor/                 # Factor analysis agent
+│   │   │   ├── builder.py         # Factor subgraph construction
+│   │   │   ├── nodes.py           # Factor agent implementation using Groq
+│   │   │   └── states.py          # Factor agent state definitions
+│   │   │
+│   │   ├── harm/                   # Harm assessment agent
+│   │   │   ├── builder.py         # Harm subgraph construction
+│   │   │   ├── nodes.py           # Harm agent implementation using Groq
+│   │   │   └── states.py          # Harm agent state definitions
+│   │   │
+│   │   ├── response/               # Response generation agent
+│   │   │   └── nodes.py           # Response agent for final output
+│   │   │
+│   │   ├── suggestion/             # Suggestion generation agent
+│   │   │   ├── builder.py         # Suggestion subgraph construction
+│   │   │   ├── nodes.py           # Suggestion agent using Groq
+│   │   │   └── states.py          # Suggestion agent state definitions
+│   │   │
+│   │   └── supervisor/             # Main supervisor agent
+│   │       ├── models.py          # Supervisor models for delegation
+│   │       └── nodes.py           # Supervisor implementation using Groq
 │   │
 │   ├── common/                      # Shared utilities
-│   │   ├── chunking/               # Text chunking utilities
-│   │   │   ├── jina_api.py        # Jina AI embeddings integration
-│   │   │   └── late_chunking.py   # Late chunking implementation
+│   │   ├── llm/                    # LLM integration
+│   │   │   └── agent.py           # LLM agent factory (Groq/Ollama support)
 │   │   │
-│   │   ├── logging/               # Logging setup and utilities
-│   │   │   ├── formatters.py      # Custom log formatters
-│   │   │   ├── handlers.py        # Custom log handlers
-│   │   │   └── setup.py           # Logging initialization
-│   │   │
-│   │   └── llm/                 # LLM integration utilities
+│   │   └── logging/                # Logging setup
+│   │       └── setup.py           # Logging configuration
 │   │
-│   ├── graph/                      # LangGraph workflow definitions
+│   ├── graph/                      # LangGraph workflow
 │   │   ├── builder.py             # Main graph construction
 │   │   └── states.py              # Graph state definitions
 │   │
-│   └── tools/                      # External tool integrations
+│   ├── lmchunker/                  # Language model chunking
+│   │   ├── chunker.py             # Main chunking logic
+│   │   └── modules/               # Chunking modules
+│   │
+│   └── tools/                      # External integrations
+│       ├── rag/                    # RAG (Retrieval-Augmented Generation)
+│       │   ├── utils.py           # RAG utilities
+│       │   └── vectorstore.py     # Vector store operations
+│       │
+│       ├── utils/                  # Utility functions
+│       │   ├── chunking/          # Text chunking utilities
+│       │   │   ├── markdown.py    # Markdown-specific chunking
+│       │   │   └── perplexity_chunking.py  # Perplexity-based chunking
+│       │   │
+│       │   └── embeddings/        # Embedding utilities
+│       │       ├── api.py         # Embedding API integration
+│       │       └── late_chunking.py  # Late chunking implementation
+│       │
 │       └── web/                    # Web-related tools
 │           ├── scraper/           # Web scraping functionality
-│           └── search/            # Search engine integration
+│           └── search/            # SearXNG search integration
 │
-├── pyproject.toml                 
-├── README.md                       
-└── uv.lock                        
+├── pyproject.toml                  # Project metadata and dependencies
+├── README.md                       # Project documentation
+└── uv.lock                         # Dependency lock file
+```

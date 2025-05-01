@@ -22,7 +22,7 @@ class SearXNGSearch:
     async def search(
         self,
         query: str,
-        #    max_results: int = 5,
+        max_results: int = 5,
         include_domains: List[str] = [],
         exclude_domains: List[str] = [],
         opts: Optional[SearXNGSearchParams] = None,
@@ -57,7 +57,8 @@ class SearXNGSearch:
                 ]
 
             general_results: List[SearXNGSearchResult] = [
-                SearXNGSearchResult(**result) for result in general_results
+                SearXNGSearchResult(**result)
+                for result in general_results[:max_results]
             ]
 
             return SearXNGSearchResponse(results=general_results)  # type: ignore
