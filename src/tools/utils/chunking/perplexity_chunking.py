@@ -6,9 +6,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-def initialize_perplexity_model(
-    model: str = "google/gemma-3-1b-it", device: str = "mps"
-):
+def initialize_perplexity_model(model: str = "Qwen/Qwen3-0.6B", device: str = "mps"):
     small_tokenizer = AutoTokenizer.from_pretrained(model, trust_remote_code=True)
     small_model = AutoModelForCausalLM.from_pretrained(
         model, trust_remote_code=True
@@ -25,6 +23,8 @@ def split_document_by_perplexity(
     threshold: float = 0.0,
     dynamic_merge: str = "yes",
     target_size: int = 256,
+    batch_size=1024,
+    max_txt_size=4500,
 ) -> list:
     chunks = chunker(
         text=text,
@@ -34,5 +34,7 @@ def split_document_by_perplexity(
         threshold=threshold,
         dynamic_merge=dynamic_merge,
         target_size=target_size,
+        batch_size=batch_size,
+        max_txt_size=max_txt_size,
     )
     return chunks

@@ -8,10 +8,10 @@ def chunker(
     small_tokenizer,
     methodth="ppl",
     threshold=0,
-    dynamic_merge="no",
-    target_size=200,
-    batch_size=4096,
-    max_txt_size=9000,
+    dynamic_merge="yes",
+    target_size=256,
+    batch_size=1024,
+    max_txt_size=4500,
 ) -> List[str]:
     """
     Segments the given text into chunks based on the specified method and parameters.

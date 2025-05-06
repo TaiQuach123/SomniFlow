@@ -16,11 +16,19 @@ class WebScraper:
         self,
         urls: List[str],
     ):
-        async with AsyncWebCrawler(config=self.browser_config) as crawler:
-            results = await crawler.arun_many(urls=urls, config=self.run_config)
+        try:
+            async with AsyncWebCrawler(config=self.browser_config) as crawler:
+                results = await crawler.arun_many(urls=urls, config=self.run_config)
 
-        # if not results[0].success:
-        #     print(f"Crawl failed: {results.error_message}")
-        #     print(f"Status code: {results.status_code}")
-        fit_markdowns = [result.markdown.fit_markdown for result in results]
-        return fit_markdowns
+            # if not results[0].success:
+            #     print(f"Crawl failed: {results.error_message}")
+            #     print(f"Status code: {results.status_code}")
+            fit_markdowns = [
+                result.markdown.fit_markdown if result.success else ""
+                for result in results
+            ]
+            return fit_markdowns
+
+        except Exception as e:
+            print(f"Error crawling URLs: {e}")
+            return []

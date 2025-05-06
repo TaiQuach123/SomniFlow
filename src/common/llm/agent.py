@@ -6,7 +6,7 @@ from pydantic_ai.providers.openai import OpenAIProvider
 
 
 def create_llm_agent(
-    provider: Literal["ollama", "groq"] = "ollama",
+    provider: Literal["ollama", "groq", "gemini"] = "ollama",
     model_name: str = "qwen2.5-coder",
     base_url: str = "http://localhost:11434/v1",
     **kwargs,
@@ -19,6 +19,9 @@ def create_llm_agent(
         )
     elif provider == "groq":
         llm = f"groq:{model_name}"
+
+    elif provider == "gemini":
+        llm = f"google-gla:{model_name}"
 
     else:
         raise ValueError(f"Unsupported provider: {provider}")

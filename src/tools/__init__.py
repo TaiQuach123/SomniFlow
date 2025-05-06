@@ -1,5 +1,3 @@
-from src.tools.web.search import SearXNGSearch, URLRanker
-from src.tools.web.scraper import WebScraper, SemanticSnippetSelector
+from src.tools.web.pipeline import WebSearchPipeline
 
-
-__all__ = ["SearXNGSearch", "URLRanker", "WebScraper", "SemanticSnippetSelector"]
+__all__ = ["WebSearchPipeline"]

@@ -22,8 +22,11 @@ class AgentDelegation(BaseModel):
     )
     should_response: bool = Field(
         description=(
-            "Set to True only if sufficient information has been gathered from all relevant agents, and this information is available (e.g., in the chat history). "
-            "This field should never be set to True if one or more agents have pending tasks, as it indicates that the context is incomplete."
+            "Indicates whether a final response can be generated for the user. "
+            "Set to True if either: (1) sufficient information has been gathered "
+            "from all relevant agents and is accessible (e.g., in the chat history), "
+            "or (2) the query does not require context or delegation (e.g., greetings, simple acknowledgments). "
+            "Do not set to True if any required agent tasks are still pending."
         ),
         default=False,
     )

@@ -4,7 +4,7 @@ import spacy
 import math
 from typing import List
 from src.lmchunker.utils import Chunking, split_into_sentences, reconstruct_text
-
+from transformers import DynamicCache
 
 # Load spaCy model
 nlp = spacy.load("en_core_web_sm")
@@ -119,7 +119,7 @@ def extract_by_html2text_db_chongdie(
     final_chunks = []
     for sent_list in first_chunk_sentences:
         final_chunks.append("".join(sent_list))
-    print("111", first_chunk_indices)
+    # print("111", first_chunk_indices)
     # print('222', first_chunk_sentences)
 
     return final_chunks
@@ -182,7 +182,7 @@ def extract_by_html2text_db_nolist(sub_text, model, tokenizer, threshold) -> Lis
     for sent_list in first_chunk_sentences:
         final_chunks.append(reconstruct_text(sent_list))
         # final_chunks.append("".join(sent_list))
-    print("111", first_chunk_indices)
+    # print("111", first_chunk_indices)
     # print('222', first_chunk_sentences)
 
     return final_chunks
@@ -247,7 +247,7 @@ def extract_by_html2text_db_dynamic(
     final_chunks = []
     for sent_list in first_chunk_sentences:
         final_chunks.append("".join(sent_list))
-    print("111", first_chunk_indices)
+    # print("111", first_chunk_indices)
     # print('222', first_chunk_sentences)
     # temp_para经过困惑度分组
     return final_chunks, threshold, threshold_zlist
@@ -280,7 +280,7 @@ def extract_by_html2text_db_dynamic_batch(
         attention_mask_tmp = tokenized_text["attention_mask"].to(model.device)
         attention_mask = torch.cat([attention_mask, attention_mask_tmp], dim=-1)
 
-    batch_size = 4096  # 6000
+    batch_size = 1024  # 6000
 
     total_batches = math.ceil(input_ids.shape[1] / batch_size)
     loss = torch.tensor([], device=model.device, dtype=torch.long)
@@ -360,9 +360,7 @@ def extract_by_html2text_db_dynamic_batch(
     final_chunks = []
     for sent_list in first_chunk_sentences:
         final_chunks.append("".join(sent_list))
-    print("111", first_chunk_indices)
-    # print('222', first_chunk_sentences)
-    # temp_para经过困惑度分组
+    # print("111", first_chunk_indices)
     return final_chunks, threshold, threshold_zlist
 
 
@@ -377,6 +375,9 @@ def extract_by_html2text_db_bench(
 ) -> List[str]:
     temp_para = sub_text
     cleaned_text = temp_para
+
+    if past_key_values is None:
+        past_key_values = DynamicCache()
 
     segments = split_text_by_punctuation(cleaned_text)
     segments = [item for item in segments if item.strip()]
@@ -394,10 +395,8 @@ def extract_by_html2text_db_bench(
         attention_mask_tmp = tokenized_text["attention_mask"].to(model.device)
         attention_mask = torch.cat([attention_mask, attention_mask_tmp], dim=-1)
 
-    batch_size = batch_size
-
     total_batches = math.ceil(input_ids.shape[1] / batch_size)
-    print("111", input_ids.shape[1])
+
     loss = torch.tensor([], device=model.device, dtype=torch.long)
     for i in range(total_batches):
         start = i * batch_size
@@ -421,15 +420,15 @@ def extract_by_html2text_db_bench(
             dim=-1,
         )
 
-        size = input_ids_tmp.shape[1]
-        if attention_mask_tmp.shape[1] > max_txt_size:
-            past_key_values = [
-                [k[:, :, size + 1 :], v[:, :, size + 1 :]] for k, v in past_key_values
-            ]
-            attention_mask_tmp = attention_mask_tmp[
-                :, attention_mask_tmp.shape[1] - size - past_key_values[0][0].shape[2] :
-            ]
-            # print('111',attention_mask_tmp.shape,past_key_values[0][0].shape[2])
+        # size = input_ids_tmp.shape[1]
+        # if attention_mask_tmp.shape[1] > max_txt_size:
+        #     past_key_values = [
+        #         [k[:, :, size + 1 :], v[:, :, size + 1 :]] for k, v in past_key_values
+        #     ]
+        #     attention_mask_tmp = attention_mask_tmp[
+        #         :, attention_mask_tmp.shape[1] - size - past_key_values[0][0].shape[2] :
+        #     ]
+        # print('111',attention_mask_tmp.shape,past_key_values[0][0].shape[2])
 
         loss_tmp, past_key_values = ch.get_ppl_batch(
             input_ids_tmp,
@@ -438,7 +437,6 @@ def extract_by_html2text_db_bench(
             return_kv=True,
         )
         loss = torch.cat([loss, loss_tmp], dim=-1)
-        # print(input_ids_tmp.shape,attention_mask_tmp.shape,past_key_values[0][0].shape[2],loss.shape)
 
     first_cluster_ppl = []
     index = 0
@@ -473,7 +471,7 @@ def extract_by_html2text_db_bench(
     for sent_list in first_chunk_sentences:
         final_chunks.append(reconstruct_text(sent_list))
         # final_chunks.append("".join(sent_list))
-    print("111", first_chunk_indices)
+    # print("111", first_chunk_indices)
     # print('222', first_chunk_sentences)
 
     return final_chunks
@@ -486,13 +484,13 @@ def llm_chunker_ppl(
     threshold,
     batch_size=4096,
     max_txt_size=9000,
-    dynamic_merge="no",
+    dynamic_merge="yes",
     target_size=200,
 ) -> List[str]:
-    start_time = time.time()
+    # start_time = time.time()
     txt_length = len(sub_text.split())
 
-    if txt_length <= 4096:
+    if txt_length <= batch_size:
         new_final_chunks = extract_by_html2text_db_nolist(
             sub_text, model, tokenizer, threshold
         )
@@ -506,9 +504,21 @@ def llm_chunker_ppl(
         current_paragraph = ""
 
         for paragraph in new_final_chunks:
+            if (
+                len(tokenizer(paragraph, add_special_tokens=False)["input_ids"])
+                + len(
+                    tokenizer(current_paragraph, add_special_tokens=False)["input_ids"]
+                )
+                <= target_size
+            ):
+                if current_paragraph.endswith("\n") or current_paragraph == "":
+                    current_paragraph += paragraph
+                else:
+                    current_paragraph += " " + paragraph
+
             # Check if adding a new paragraph to the current paragraph exceeds the target size
-            if len(current_paragraph.split()) + len(paragraph.split()) <= target_size:
-                current_paragraph += " " + paragraph
+            # if len(current_paragraph.split()) + len(paragraph.split()) <= target_size:
+            #     current_paragraph += " " + paragraph
             else:
                 merged_paragraphs.append(current_paragraph)
                 current_paragraph = paragraph
@@ -518,8 +528,8 @@ def llm_chunker_ppl(
     else:
         merged_paragraphs = new_final_chunks
 
-    end_time = time.time()
-    execution_time = end_time - start_time
-    print(f"The program execution time is: {execution_time} seconds.")
+    # end_time = time.time()
+    # execution_time = end_time - start_time
+    # print(f"The program execution time is: {execution_time} seconds.")
 
     return merged_paragraphs
