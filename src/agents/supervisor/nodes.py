@@ -49,6 +49,7 @@ async def supervisor_node(
     ]
 ]:
     writer = get_stream_writer()
+
     message_history: list[ModelMessage] = []
     supervisor_agent = create_supervisor_agent()
     for message_row in state["messages"]:
@@ -127,8 +128,5 @@ async def supervisor_node(
 
 
 def ask_human(state: MainGraphState):
-    writer = get_stream_writer()
-    writer("--- ask_human node ---\n")
     value = interrupt({})
-
     return {"user_input": value}

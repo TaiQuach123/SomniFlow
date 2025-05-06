@@ -15,4 +15,6 @@ wheels/
 logs
 notebooks
 test.ipynb
+data_test
 qdrant_storage
+*.ipynb

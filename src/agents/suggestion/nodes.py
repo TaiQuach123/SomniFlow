@@ -85,8 +85,6 @@ def create_suggestion_reflection_agent() -> Agent:
 
 
 async def task_handler_node(state: SuggestionState):
-    writer = get_stream_writer()
-    writer("NODE:--- Suggestion Task Handler Node ---")
     suggestion_task_handler_agent = create_suggestion_task_handler_agent()
     res = await suggestion_task_handler_agent.run(
         "",
@@ -165,7 +163,7 @@ async def context_processor_node(
     state: SuggestionState,
 ) -> Command[Literal["task_handler_node", END]]:
     writer = get_stream_writer()
-    writer("--- Suggestion Context Processor Node ---\n")
+    writer("NODE:Context Processor Node")
     extractor_agent = create_suggestion_extractor_agent()
     extractor_result = await extractor_agent.run(
         "",

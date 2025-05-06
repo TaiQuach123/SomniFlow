@@ -35,7 +35,6 @@ def get_response_agent() -> Agent:
 
 async def response_node(state: MainGraphState):
     writer = get_stream_writer()
-    writer("--- Response Node ---")
 
     contexts = "\n\n".join(
         [
