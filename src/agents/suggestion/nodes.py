@@ -1,3 +1,4 @@
+import logging
 from typing import Literal
 from pydantic_ai import Agent, RunContext
 from langgraph.config import get_stream_writer
@@ -14,6 +15,11 @@ from src.tools.utils.formatters import (
 )
 from langgraph.graph import END
 from langgraph.types import Command
+
+from src.common.logging import get_logger
+
+logger = get_logger("my_app")
+logging.getLogger("httpx").setLevel(logging.WARNING)
 
 
 def create_suggestion_task_handler_agent() -> Agent:
@@ -85,6 +91,7 @@ def create_suggestion_reflection_agent() -> Agent:
 
 
 async def task_handler_node(state: SuggestionState):
+    logger.info("Suggestion Task Handler Node")
     suggestion_task_handler_agent = create_suggestion_task_handler_agent()
     res = await suggestion_task_handler_agent.run(
         "",
@@ -100,6 +107,7 @@ async def task_handler_node(state: SuggestionState):
 async def retriever(
     state: SuggestionState,
 ) -> Command[Literal["context_processor_node", END]]:
+    logger.info("Suggestion Retriever Node")
     writer = get_stream_writer()
 
     rag_results = await retrieve_batch(
@@ -162,8 +170,8 @@ async def retriever(
 async def context_processor_node(
     state: SuggestionState,
 ) -> Command[Literal["task_handler_node", END]]:
+    logger.info("Suggestion Context Processor Node")
     writer = get_stream_writer()
-    writer("NODE:Context Processor Node")
     extractor_agent = create_suggestion_extractor_agent()
     extractor_result = await extractor_agent.run(
         "",

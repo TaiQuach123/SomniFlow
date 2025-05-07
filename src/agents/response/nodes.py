@@ -1,3 +1,4 @@
+import logging
 from src.graph.states import MainGraphState
 from src.common.logging import get_logger
 from src.agents.response.prompts import response_agent_prompt
@@ -15,6 +16,10 @@ from pydantic_ai.messages import (
 )
 
 from src.common.llm import create_llm_agent
+
+
+logger = get_logger("my_app")
+logging.getLogger("httpx").setLevel(logging.WARNING)
 
 
 def get_response_agent() -> Agent:
@@ -35,6 +40,7 @@ def get_response_agent() -> Agent:
 
 async def response_node(state: MainGraphState):
     writer = get_stream_writer()
+    logger.info("Response Node")
 
     contexts = "\n\n".join(
         [
@@ -49,6 +55,7 @@ async def response_node(state: MainGraphState):
     message_history: list[ModelMessage] = []
     for message_row in state["messages"]:
         message_history.extend(ModelMessagesTypeAdapter.validate_json(message_row))
+    logger.info(print(message_history))
 
     response_agent = get_response_agent()
 
@@ -59,7 +66,7 @@ async def response_node(state: MainGraphState):
         model_settings={"temperature": 0.0},
     ) as result:
         async for chunk in result.stream_text(delta=True, debounce_by=None):
-            writer(f"TOKEN:{chunk}")
+            writer(f"TOKEN: {chunk}")
 
     response = await result.get_output()
 

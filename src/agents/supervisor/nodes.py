@@ -49,11 +49,14 @@ async def supervisor_node(
     ]
 ]:
     writer = get_stream_writer()
+    logger.info("Supervisor Node")
 
     message_history: list[ModelMessage] = []
     supervisor_agent = create_supervisor_agent()
     for message_row in state["messages"]:
         message_history.extend(ModelMessagesTypeAdapter.validate_json(message_row))
+
+    logger.info(print(message_history))
 
     output = await supervisor_agent.run(
         state["user_input"],
@@ -62,7 +65,8 @@ async def supervisor_node(
     )
 
     if isinstance(output.output, ClarificationRequest):
-        writer(f"TOKEN:{output.output.follow_up_question}")
+        logger.info("Clarification Request")
+        writer(f"TOKEN: {output.output.follow_up_question}")
 
         return Command(
             goto="ask_human_node",
