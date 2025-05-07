@@ -49,14 +49,14 @@ async def supervisor_node(
     ]
 ]:
     writer = get_stream_writer()
-    logger.info("Supervisor Node")
+    # logger.info("Supervisor Node")
 
     message_history: list[ModelMessage] = []
     supervisor_agent = create_supervisor_agent()
     for message_row in state["messages"]:
         message_history.extend(ModelMessagesTypeAdapter.validate_json(message_row))
 
-    logger.info(print(message_history))
+    # logger.info(print(message_history))
 
     output = await supervisor_agent.run(
         state["user_input"],

@@ -110,6 +110,8 @@ async def retriever(
     logger.info("Suggestion Retriever Node")
     writer = get_stream_writer()
 
+    writer(f"RAG_QUERIES: {'\n'.join('- ' + query for query in state['queries'])}")
+
     rag_results = await retrieve_batch(
         queries=state["queries"],
         collection_name="test",
@@ -144,6 +146,8 @@ async def retriever(
             search_queries = evaluator_result.output.new_queries
         else:
             search_queries = state["queries"]
+
+        writer(f"WEB_QUERIES: {'\n'.join('- ' + query for query in search_queries)}")
 
         ### Web Search
         web_search_pipeline = get_resource_manager().web_search_pipeline

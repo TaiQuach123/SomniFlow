@@ -30,8 +30,6 @@ class SearXNGSearchResponse(BaseModel):
 
 
 class SearXNGSearchParams(TypedDict):
-    categories: Optional[str]
-    engines: Optional[str]
     language: Optional[str]
     pageno: Optional[int]
     time_range: Optional[str]

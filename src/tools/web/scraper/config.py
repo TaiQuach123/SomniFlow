@@ -8,6 +8,8 @@ from crawl4ai.async_configs import BrowserConfig
 from crawl4ai.markdown_generation_strategy import DefaultMarkdownGenerator
 from crawl4ai.content_filter_strategy import PruningContentFilter
 
+# from crawl4ai import RateLimiter
+# from crawl4ai.async_dispatcher import MemoryAdaptiveDispatcher
 from typing import List
 from functools import lru_cache
 
@@ -32,8 +34,16 @@ class ScraperSettings(BaseSettings):
     exclude_external_images: bool = True
     process_iframes: bool = False
     remove_overlay_elements: bool = True
+    # user_agent_mode: str = "random"
     excluded_tags: List[str] = ["form", "header", "footer", "nav"]
     cache_mode: CacheMode = CacheMode.BYPASS
+
+    # Rate limiting settings
+    # base_delay: tuple = (0.25, 0.5)
+    # max_delay: float = 5
+
+    # Dispatcher settings
+    # max_session_permit: int = 50
 
     @property
     def get_markdown_options(self) -> dict:
@@ -63,9 +73,19 @@ class ScraperSettings(BaseSettings):
             process_iframes=self.process_iframes,
             remove_overlay_elements=self.remove_overlay_elements,
             excluded_tags=self.excluded_tags,
+            # user_agent_mode=self.user_agent_mode,
             scraping_strategy=LXMLWebScrapingStrategy(),
             cache_mode=self.cache_mode,
         )
+
+    # def get_rate_limiter(self) -> RateLimiter:
+    #     return RateLimiter(base_delay=self.base_delay, max_delay=self.max_delay)
+
+    # def get_dispatcher(self) -> MemoryAdaptiveDispatcher:
+    #     return MemoryAdaptiveDispatcher(
+    #         max_session_permit=self.max_session_permit,
+    #         rate_limiter=self.get_rate_limiter(),
+    #     )
 
 
 @lru_cache()
@@ -78,7 +98,7 @@ settings = get_settings()
 
 browser_config = settings.get_browser_config()
 run_config = settings.get_run_config()
-
+# dispatcher = settings.get_dispatcher()
 
 if __name__ == "__main__":
     print(browser_config)

@@ -11,11 +11,11 @@ from src.tools.utils.embeddings.api import (
 
 @dataclass
 class SnippetConfig:
-    chunk_size: int = 128
+    chunk_size: int = 512
     chunk_overlap: int = 0
     max_tokens: int = 8192
-    window_size: int = 2
-    top_k: int = 5
+    window_size: int = 0
+    top_k: int = 3
 
 
 @dataclass

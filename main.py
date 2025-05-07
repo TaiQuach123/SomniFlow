@@ -1,6 +1,8 @@
-from fastapi import FastAPI
-from fastapi.responses import StreamingResponse
+import os
+from fastapi import FastAPI, Request
+from fastapi.responses import StreamingResponse, HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 from src.graph.builder import create_main_graph
 from typing import AsyncIterable
@@ -8,17 +10,21 @@ from contextlib import asynccontextmanager
 from psycopg_pool import AsyncConnectionPool
 from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
 
+from dotenv import load_dotenv
 
-config = {"configurable": {"thread_id": "10"}}
+load_dotenv()
 
 
-app_state = {"checkpointer": None, "graph": None}
+config = {"configurable": {"thread_id": "20"}}
+
+
+app_state = {"graph": None}
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     pool = AsyncConnectionPool(
-        conninfo="postgresql://postgres:0913979472aA@localhost:5432/postgres?sslmode=disable",
+        conninfo=os.getenv("POSTGRES_DB_URL"),
         max_size=20,
         kwargs={"autocommit": True, "prepare_threshold": 0},
         open=False,
@@ -43,6 +49,12 @@ class UserInput(BaseModel):
 
 app = FastAPI(lifespan=lifespan)
 
+# Create templates directory if it doesn't exist
+os.makedirs("templates", exist_ok=True)
+
+# Set up templates
+templates = Jinja2Templates(directory="templates")
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -50,6 +62,11 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.get("/", response_class=HTMLResponse)
+async def get_chat_interface(request: Request):
+    return templates.TemplateResponse("index.html", {"request": request})
 
 
 @app.get("/health")
@@ -61,8 +78,9 @@ async def generate_response(query: str) -> AsyncIterable[str]:
     async for data in app_state["graph"].astream(
         {"user_input": query}, config, stream_mode="custom"
     ):
-        print(data.replace("TOKEN: ", ""), end="")
-        yield data.replace("TOKEN: ", "")
+        # Pass through all data types (TOKEN, RAG_QUERIES, WEB_QUERIES)
+        print(data)
+        yield data + "\n"
 
 
 @app.post("/stream_chat")
