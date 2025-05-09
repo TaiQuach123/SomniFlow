@@ -1,5 +1,8 @@
 from typing import Literal, Union
 import logging
+import json
+import binascii
+import os
 
 from pydantic_ai import Agent
 from pydantic_ai.messages import (
@@ -49,7 +52,6 @@ async def supervisor_node(
     ]
 ]:
     writer = get_stream_writer()
-    # logger.info("Supervisor Node")
 
     message_history: list[ModelMessage] = []
     supervisor_agent = create_supervisor_agent()
@@ -66,7 +68,17 @@ async def supervisor_node(
 
     if isinstance(output.output, ClarificationRequest):
         logger.info("Clarification Request")
-        writer(f"TOKEN: {output.output.follow_up_question}")
+        writer(
+            json.dumps(
+                {
+                    "type": "message",
+                    "data": output.output.follow_up_question,
+                    "messageId": state["messageId"],
+                }
+            )
+            + "\n"
+        )
+        writer(json.dumps({"type": "messageEnd"}) + "\n")
 
         return Command(
             goto="ask_human_node",

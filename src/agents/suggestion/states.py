@@ -11,6 +11,7 @@ class SuggestionState(TypedDict):
     queries: List[str]
     raw_contexts: str
     suggestion_context: str
+    messageId: str
 
 
 class SuggestionOutputState(TypedDict):

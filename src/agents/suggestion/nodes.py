@@ -1,3 +1,4 @@
+import json
 import logging
 from typing import Literal
 from pydantic_ai import Agent, RunContext
@@ -110,8 +111,6 @@ async def retriever(
     logger.info("Suggestion Retriever Node")
     writer = get_stream_writer()
 
-    writer(f"RAG_QUERIES: {'\n'.join('- ' + query for query in state['queries'])}")
-
     rag_results = await retrieve_batch(
         queries=state["queries"],
         collection_name="test",
@@ -147,8 +146,6 @@ async def retriever(
         else:
             search_queries = state["queries"]
 
-        writer(f"WEB_QUERIES: {'\n'.join('- ' + query for query in search_queries)}")
-
         ### Web Search
         web_search_pipeline = get_resource_manager().web_search_pipeline
 
@@ -158,6 +155,25 @@ async def retriever(
 
         web_contexts, i, web_source_map = format_web_results_with_prefix(
             web_results, i, state.get("web_source_map", {})
+        )
+
+        web_sources = [
+            {
+                "metadata": {"title": data["title"], "url": source},
+                "pageContent": "\n---\n".join(data["contents"]),
+            }
+            for source, data in web_source_map.items()
+        ]
+
+        writer(
+            json.dumps(
+                {
+                    "type": "sources",
+                    "data": web_sources,
+                    "messageId": state["messageId"],
+                }
+            )
+            + "\n"
         )
 
         merged_contexts = "\n\n".join([rag_contexts, web_contexts])

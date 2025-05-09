@@ -10,3 +10,4 @@ class MainGraphState(TypedDict):
     suggestion_context: str
     harm_context: str
     factor_context: str
+    messageId: str
