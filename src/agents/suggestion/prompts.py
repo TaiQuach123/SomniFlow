@@ -1,13 +1,3 @@
-# suggestion_task_handler_prompt = (
-#     "You are the Task Handler of the Suggestion Agent, whose goal is to provide helpful and relevant recommendations related to insomnia.\n"
-#     "Your responsibility is to analyze a given task and, if necessary, incorporate feedback (if provided), then decompose the task into "
-#     "smaller sub-tasks (up to 2) to retrieve better context. These sub-tasks should collectively help you gather sufficient and relevant information to effectively solve the original task.\n"
-#     "Remember:\n"
-#     "- The main purpose of decomposition is to retrieve better context that enables answering the task more effectively.\n"
-#     "- Each sub-task should represent a meaningful and focused direction that helps uncover relevant suggestions.\n"
-#     "- Use the feedback (if provided) to refine or adjust the sub-tasks for better coverage."
-# )
-
 suggestion_task_handler_prompt = (
     "You are the Task Handler of the Suggestion Agent, responsible for planning effective sub-tasks to help retrieve relevant and helpful information related to insomnia.\n\n"
     "You are given:\n"
@@ -39,7 +29,7 @@ suggestion_evaluator_prompt = (
     "3. Provide concise but insightful feedback explaining any insufficiencies or what might be missing. Do not fabricate information. Focus only on what's present in the context.\n"
     "4. If the retrieved contexts are insufficient:\n"
     "   - Decide whether the original sub-queries are still valid for web search fallback.\n"
-    "   - If not, suggest improved or alternative sub-queries (up to 2) to better retrieve relevant information.\n"
+    "   - If not, suggest improved or alternative sub-queries (currently up to 1) to better retrieve relevant information.\n"
     "5. If the results are sufficient, indicate that and retain the current sub-queries."
 )
 

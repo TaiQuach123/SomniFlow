@@ -1,3 +1,4 @@
+import asyncio
 import numpy as np
 from dataclasses import dataclass
 from typing import List, Dict, Optional
@@ -167,6 +168,7 @@ class SemanticSnippetSelector:
     async def select_snippets(
         self,
         query: str,
+        query_embedding: np.ndarray,
         context: str,
         url: str,
         title: str,
@@ -201,20 +203,25 @@ class SemanticSnippetSelector:
             enriched_chunks = self._enrich_chunks(chunks)
             chunk_batches = self._create_batches(enriched_chunks, config.max_tokens)
 
-            # Get embeddings for all chunks
-            all_chunk_embeddings = np.empty((0, 1024))
-            for batch in chunk_batches:
-                batch_embeddings = await get_api_passage_embeddings(batch)
-                all_chunk_embeddings = np.concatenate(
-                    (all_chunk_embeddings, batch_embeddings), axis=0
-                )
+            # Get embeddings for all chunks - create and start tasks immediately
+            embedding_tasks = [
+                asyncio.create_task(get_api_passage_embeddings(batch))
+                for batch in chunk_batches
+            ]
 
-            # Get query embedding
-            question_embedding = await get_api_query_embeddings([query])
+            # Await all embedding tasks
+            batch_embeddings_list = await asyncio.gather(*embedding_tasks)
+
+            # Efficiently combine all embeddings at once
+            all_chunk_embeddings = (
+                np.vstack(batch_embeddings_list)
+                if batch_embeddings_list
+                else np.empty((0, 1024))
+            )
 
             # Calculate similarities
             similarities = self._cosine_similarity(
-                question_embedding, all_chunk_embeddings
+                query_embedding, all_chunk_embeddings
             )[0]
 
             # print("Similarities:", similarities)

@@ -172,24 +172,24 @@ const ChatWindow = ({ id }: { id?: string }) => {
             {
               messageId: data.messageId,
               threadId: threadId!,
-              content: data.data,
+              content: data.data, // First chunk
               role: "assistant",
               createdAt: new Date(),
               sources: sources,
             },
           ]);
           added = true;
+        } else {
+          // Only append to existing message
+          setMessages((prev) =>
+            prev.map((message) => {
+              if (message.messageId === data.messageId) {
+                return { ...message, content: message.content + data.data };
+              }
+              return message;
+            })
+          );
         }
-
-        setMessages((prev) =>
-          prev.map((message) => {
-            console.log(message, data);
-            if (message.messageId === data.messageId) {
-              return { ...message, content: message.content + data.data };
-            }
-            return message;
-          })
-        );
 
         receivedMessage += data.data;
         setMessageAppeared(true);

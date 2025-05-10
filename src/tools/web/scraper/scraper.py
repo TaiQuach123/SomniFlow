@@ -1,6 +1,6 @@
 from typing import List
 from crawl4ai import AsyncWebCrawler, CrawlerRunConfig, BrowserConfig
-from src.tools.web.scraper.config import browser_config, run_config
+from src.tools.web.scraper.config import browser_config, run_config, dispatcher
 
 
 class WebScraper:
@@ -18,11 +18,10 @@ class WebScraper:
     ):
         try:
             async with AsyncWebCrawler(config=self.browser_config) as crawler:
-                results = await crawler.arun_many(urls=urls, config=self.run_config)
+                results = await crawler.arun_many(
+                    urls=urls, config=self.run_config, dispatcher=dispatcher
+                )
 
-            # if not results[0].success:
-            #     print(f"Crawl failed: {results.error_message}")
-            #     print(f"Status code: {results.status_code}")
             fit_markdowns = [
                 result.markdown.fit_markdown if result.success else ""
                 for result in results

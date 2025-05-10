@@ -2,6 +2,7 @@ import asyncio
 from typing import List
 from src.tools.web.search import SearXNGSearch, URLRanker
 from src.tools.web.scraper import WebScraper, SemanticSnippetSelector
+from src.tools.utils.embeddings.api import get_api_query_embeddings
 
 
 class WebSearchPipeline:
@@ -49,8 +50,10 @@ class WebSearchPipeline:
         ranking_options = ranking_options or default_options
 
         try:
-            # Search
-            print(f"Searching for query: {query}")
+            # Start query embedding task immediately
+            query_task = asyncio.create_task(get_api_query_embeddings([query]))
+
+            # Search and process in parallel when possible
             search_response = await self.searcher.search(
                 query=query, max_results=max_urls
             )
@@ -59,55 +62,55 @@ class WebSearchPipeline:
                 return []
 
             # Rank URLs
-            print("Ranking results...")
             ranked_results = await self.ranker.rank_urls(
                 query, search_response.results, ranking_options
             )
-            print("Finished ranking results")
 
             # Take top K results
             top_results = ranked_results[:max_results]
 
-            # Scrape content
-            print("Scraping content...")
+            # Prepare data for scraping
             urls = [result.url for result in top_results]
             titles = [result.title for result in top_results]
             descriptions = [result.content for result in top_results]
-            scraped_contents = await self.scraper.parallel_crawl_urls(urls)
-            print("Finished scraping content")
 
-            # Extract relevant snippets
-            print("Extracting snippets...")
+            # Run scraping in parallel with query embedding
+            scrape_task = asyncio.create_task(self.scraper.parallel_crawl_urls(urls))
 
-            valid_contents = []
-            valid_urls = []
-            valid_titles = []
-            valid_descriptions = []
+            # Wait for both tasks to complete
+            query_embedding, scraped_contents = await asyncio.gather(
+                query_task, scrape_task
+            )
 
-            for content, url, title, description in zip(
-                scraped_contents, urls, titles, descriptions
-            ):
-                if content.strip():
-                    valid_contents.append(content)
-                    valid_urls.append(url)
-                    valid_titles.append(title)
-                    valid_descriptions.append(description)
-                else:
-                    print(f"Skipping empty content for URL: {url}")
+            # Process valid contents
+            valid_data = [
+                (content, url, title, desc)
+                for content, url, title, desc in zip(
+                    scraped_contents, urls, titles, descriptions
+                )
+                if content.strip()
+            ]
 
+            if not valid_data:
+                return []
+
+            # Unpack the valid data
+            valid_contents, valid_urls, valid_titles, valid_descriptions = zip(
+                *valid_data
+            )
+
+            # Create and gather snippet tasks
             snippet_tasks = [
                 self.snippet_selector.select_snippets(
-                    query, content, url, title, description
+                    query, query_embedding, content, url, title, description
                 )
                 for content, url, title, description in zip(
                     valid_contents, valid_urls, valid_titles, valid_descriptions
                 )
             ]
             all_snippets = await asyncio.gather(*snippet_tasks)
-            print("Finished extracting snippets")
 
             return all_snippets
-
         except Exception as e:
-            print(f"Error in pipeline: {e}")
+            print(f"Error in search pipeline: {e}")
             return []
