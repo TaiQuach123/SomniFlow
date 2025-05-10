@@ -1,4 +1,60 @@
+from typing import List
+import torch
+from transformers import AutoTokenizer, AutoModel
 from qdrant_client import AsyncQdrantClient, models
+from fastembed import SparseTextEmbedding
+from src.tools.utils.embeddings import get_passage_embeddings, get_sparse_embeddings
+from langchain_core.documents import Document
+import uuid
+
+
+async def upload_points_per_doc(
+    chunks: List[Document],
+    doc_metadata: dict,
+    client: AsyncQdrantClient,
+    collection_name: str,
+    model: AutoModel,
+    tokenizer: AutoTokenizer,
+    passage_adapter_mask: torch.Tensor,
+    sparse_model: SparseTextEmbedding,
+):
+    text_contents = [chunk.page_content for chunk in chunks]
+    dense_embeddings = get_passage_embeddings(
+        text_contents,
+        model,
+        tokenizer,
+        passage_adapter_mask,
+        max_tokens=8192,
+        overlap_size=1024,
+    )
+    sparse_embeddings = get_sparse_embeddings(text_contents, sparse_model)
+
+    for i in range(len(chunks)):
+        metadata = doc_metadata
+        metadata["chunk_no"] = i
+
+        sparse_vector = models.SparseVector(
+            indices=sparse_embeddings[i].indices.tolist(),
+            values=sparse_embeddings[i].values.tolist(),
+        )
+        dense_vector = dense_embeddings[i].tolist()
+
+        try:
+            await client.upsert(
+                collection_name=collection_name,
+                points=[
+                    models.PointStruct(
+                        id=str(uuid.uuid4()),
+                        vector={"dense": dense_vector, "sparse": sparse_vector},
+                        payload={
+                            "content": chunks[i].page_content,
+                            "metadata": metadata,
+                        },
+                    )
+                ],
+            )
+        except Exception as e:
+            print(f"Error uploading point {i}: {e}")
 
 
 async def create_vector_store(client: AsyncQdrantClient, collection_name: str):
@@ -6,31 +62,10 @@ async def create_vector_store(client: AsyncQdrantClient, collection_name: str):
         await client.create_collection(
             collection_name,
             vectors_config={
-                "dense": models.VectorParams(
-                    size=1024, distance=models.Distance.COSINE
-                ),
+                "dense": models.VectorParams(size=1024, distance=models.Distance.DOT),
             },
             sparse_vectors_config={"sparse": models.SparseVectorParams()},
         )
         print(f"Collection {collection_name} created successfully.")
     else:
         print(f"Collection {collection_name} already exists.")
-
-
-async def add_data_to_vectorstore(
-    client: AsyncQdrantClient, collection_name: str, data_path: str
-):
-    try:
-        await client.upload_points(
-            collection_name,
-            points=[
-                models.PointStruct(
-                    id="",
-                    vector={"dense": "", "sparse": ""},
-                    payload={},
-                )
-            ],
-            batch_size=1,
-        )
-    except:
-        print("Error uploading data to vector store.")

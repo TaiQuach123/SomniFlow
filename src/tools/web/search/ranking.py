@@ -6,11 +6,6 @@ from src.tools.utils.reranker.api import rerank_documents
 from src.tools.web.search.models import SearXNGSearchResult, BoostedSearXNGSearchResult
 
 
-from src.common.logging import get_logger
-
-logger = get_logger("my_app")
-
-
 class URLRanker:
     def __init__(self, jina_api_key: str | None = None):
         self.api_key = jina_api_key or os.getenv("JINA_API_KEY")
@@ -73,42 +68,48 @@ class URLRanker:
         counts = self.count_url_parts(url_items)
         boosted_items = [BoostedSearXNGSearchResult(**vars(item)) for item in url_items]
 
-        if query.strip():
-            unique_content_map: Dict[str, List[int]] = {}
-            for idx, item in enumerate(url_items):
-                content = f"{item.title} {item.content}".strip()
-                if content not in unique_content_map:
-                    unique_content_map[content] = []
-                unique_content_map[content].append(idx)
+        try:
+            if query.strip():
+                unique_content_map: Dict[str, List[int]] = {}
+                for idx, item in enumerate(url_items):
+                    content = f"{item.title} {item.content}".strip()
+                    if content not in unique_content_map:
+                        unique_content_map[content] = []
+                    unique_content_map[content].append(idx)
 
-            unique_contents = list(unique_content_map.keys())
-            # logger.info(
-            #     f"Reranking query='{query}' | total_urls={len(url_items)} | unique_contents={len(unique_contents)}"
-            # )
-            rerank_results = await rerank_documents(query, unique_contents)
+                unique_contents = list(unique_content_map.keys())
+                # logger.info(
+                #     f"Reranking query='{query}' | total_urls={len(url_items)} | unique_contents={len(unique_contents)}"
+                # )
+                rerank_results = await rerank_documents(query, unique_contents)
 
-            for result in rerank_results["results"]:
-                boost = result["relevance_score"] * jina_rerank_factor
-                original_indices = unique_content_map[unique_contents[result["index"]]]
-                for idx in original_indices:
-                    boosted_items[idx].jina_rerank_boost = boost
+                for result in rerank_results["results"]:
+                    boost = result["relevance_score"] * jina_rerank_factor
+                    original_indices = unique_content_map[
+                        unique_contents[result["index"]]
+                    ]
+                    for idx in original_indices:
+                        boosted_items[idx].jina_rerank_boost = boost
 
-        # Calculate scores for each item
-        for item in boosted_items:
-            self._calculate_item_score(
-                item=item,
-                counts=counts,
-                freq_factor=freq_factor,
-                hostname_boost_factor=hostname_boost_factor,
-                path_boost_factor=path_boost_factor,
-                decay_factor=decay_factor,
-                boost_hostnames=boost_hostnames,
-                min_boost=min_boost,
-                max_boost=max_boost,
-            )
+            # Calculate scores for each item
+            for item in boosted_items:
+                self._calculate_item_score(
+                    item=item,
+                    counts=counts,
+                    freq_factor=freq_factor,
+                    hostname_boost_factor=hostname_boost_factor,
+                    path_boost_factor=path_boost_factor,
+                    decay_factor=decay_factor,
+                    boost_hostnames=boost_hostnames,
+                    min_boost=min_boost,
+                    max_boost=max_boost,
+                )
 
-        boosted_items.sort(key=lambda x: x.final_score, reverse=True)
-        return boosted_items
+            boosted_items.sort(key=lambda x: x.final_score, reverse=True)
+            return boosted_items
+        except Exception as e:
+            print(f"Error ranking URLs: {e}")
+            return []
 
     def _calculate_item_score(
         self,

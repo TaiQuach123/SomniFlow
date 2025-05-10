@@ -3,6 +3,7 @@ from typing import Annotated, List, TypedDict
 
 class HarmState(TypedDict):
     harm_context: str
+    harm_task: str
     messages: Annotated[List[bytes], lambda x, y: x + y]
     queries: List[str]
 

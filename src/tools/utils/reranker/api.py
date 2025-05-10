@@ -1,4 +1,5 @@
 import os
+import asyncio
 import httpx
 from typing import List, Dict
 
@@ -21,6 +22,8 @@ async def rerank_documents(
         all_results = []
 
         async with httpx.AsyncClient() as client:
+            # Process batches concurrently
+            tasks = []
             for batch_idx, batch_docs in enumerate(batches):
                 request_data = {
                     "model": "jina-reranker-v2-base-multilingual",
@@ -29,10 +32,14 @@ async def rerank_documents(
                     "documents": batch_docs,
                 }
 
-                response = await client.post(
-                    base_url, json=request_data, headers=headers
+                task = asyncio.create_task(
+                    client.post(base_url, json=request_data, headers=headers)
                 )
+                tasks.append((batch_idx, task))
 
+            # Await all tasks
+            for batch_idx, task in tasks:
+                response = await task
                 if response.status_code == 200:
                     data = response.json()
                     start_idx = batch_idx * batch_size

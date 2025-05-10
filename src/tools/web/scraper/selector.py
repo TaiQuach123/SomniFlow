@@ -1,26 +1,37 @@
+import asyncio
 import numpy as np
 from dataclasses import dataclass
 from typing import List, Dict, Optional
 from langchain_core.documents import Document
 from src.tools.utils.chunking import split_document_by_headers, jina_length_function
-from src.tools.utils.embeddings.api import get_passage_embeddings, get_query_embeddings
+from src.tools.utils.embeddings.api import (
+    get_api_passage_embeddings,
+    get_api_query_embeddings,
+)
 
 
 @dataclass
 class SnippetConfig:
-    chunk_size: int = 256
+    chunk_size: int = 512
     chunk_overlap: int = 0
     max_tokens: int = 8192
-    window_size: int = 1
+    window_size: int = 0
     top_k: int = 3
 
 
 @dataclass
 class SelectedSnippet:
-    url: str
     content: str
     start_index: int
     end_index: int
+
+
+@dataclass
+class WebPageSnippets:
+    url: str
+    title: str
+    description: str
+    snippets: List[SelectedSnippet]
 
 
 class SemanticSnippetSelector:
@@ -139,9 +150,31 @@ class SemanticSnippetSelector:
 
         return windows
 
+    def _get_combined_content(self, snippets: List[SelectedSnippet]) -> str:
+        return "\n\n".join(
+            [
+                f"Snippet {i + 1}: {snippet.content}"
+                for i, snippet in enumerate(snippets)
+            ]
+        )
+
+    def _format_web_page_content(self, web_page_snippets: WebPageSnippets) -> str:
+        url = web_page_snippets.url
+        title = web_page_snippets.title
+        description = web_page_snippets.description
+        content = self._get_combined_content(web_page_snippets.snippets)
+        return f"{title}\nURL: {url}\nDescription: {description}\n\n{content}\n===\n"
+
     async def select_snippets(
-        self, query: str, context: str, url: str, options: Optional[Dict] = None
-    ) -> List[SelectedSnippet]:
+        self,
+        query: str,
+        query_embedding: np.ndarray,
+        context: str,
+        url: str,
+        title: str,
+        description: str,
+        options: Optional[Dict] = None,
+    ) -> WebPageSnippets:
         """
         Select most relevant snippets from context based on query.
 
@@ -170,20 +203,25 @@ class SemanticSnippetSelector:
             enriched_chunks = self._enrich_chunks(chunks)
             chunk_batches = self._create_batches(enriched_chunks, config.max_tokens)
 
-            # Get embeddings for all chunks
-            all_chunk_embeddings = np.empty((0, 1024))
-            for batch in chunk_batches:
-                batch_embeddings = await get_passage_embeddings(batch)
-                all_chunk_embeddings = np.concatenate(
-                    (all_chunk_embeddings, batch_embeddings), axis=0
-                )
+            # Get embeddings for all chunks - create and start tasks immediately
+            embedding_tasks = [
+                asyncio.create_task(get_api_passage_embeddings(batch))
+                for batch in chunk_batches
+            ]
 
-            # Get query embedding
-            question_embedding = await get_query_embeddings([query])
+            # Await all embedding tasks
+            batch_embeddings_list = await asyncio.gather(*embedding_tasks)
+
+            # Efficiently combine all embeddings at once
+            all_chunk_embeddings = (
+                np.vstack(batch_embeddings_list)
+                if batch_embeddings_list
+                else np.empty((0, 1024))
+            )
 
             # Calculate similarities
             similarities = self._cosine_similarity(
-                question_embedding, all_chunk_embeddings
+                query_embedding, all_chunk_embeddings
             )[0]
 
             # print("Similarities:", similarities)
@@ -203,11 +241,14 @@ class SemanticSnippetSelector:
                     ),
                     start_index=window[0],
                     end_index=window[1],
-                    url=url,
                 )
                 snippets.append(snippet)
 
-            return snippets
+            web_page_snippets = WebPageSnippets(
+                url=url, title=title, description=description, snippets=snippets
+            )
+
+            return web_page_snippets
 
         except Exception as e:
             raise Exception(f"Error selecting snippets: {e}")

@@ -25,15 +25,15 @@ def add_instruction(ctx: RunContext[str]):
 
 
 async def task_handler_node(state: HarmState):
-    logger.info("Suggestion Task Handler Node")
+    logger.info("Harm Task Handler Node")
     res = await harm_agent.run(
-        "", deps=f"Task: {state['task']}", model_settings={"temperature": 0.0}
+        "", deps=f"Task: {state['harm_task']}", model_settings={"temperature": 0.0}
     )
-    logger.info(f"Queries: {res.output.queries}")
+    logger.info(f"Harm Queries: {res.output.queries}")
     return {"queries": res.output.queries}
 
 
 async def retriever(state: HarmState):
-    logger.info("Suggestion Retriever Node")
+    logger.info("Harm Retriever Node")
     await asyncio.sleep(2)
     return {"suggestion_context": "This is the context from the retriever agent."}

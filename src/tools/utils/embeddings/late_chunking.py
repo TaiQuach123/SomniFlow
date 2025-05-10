@@ -39,7 +39,7 @@ def long_late_chunking(
     tokenizer,
     passage_adapter_mask,
     chunks: List[str],
-    max_tokens: int = 4096,
+    max_tokens: int = 8192,
     overlap_size: int = 512,
 ) -> np.ndarray:
     """Implements Long Late Chunking for encoding long text documents"""

@@ -1,9 +1,9 @@
-from typing import Annotated, List, TypedDict
+from typing import List, TypedDict
 
 
 class FactorState(TypedDict):
     factor_context: str
-    messages: Annotated[List[bytes], lambda x, y: x + y]
+    factor_task: str
     queries: List[str]
 
 
