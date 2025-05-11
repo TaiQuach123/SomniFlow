@@ -139,7 +139,84 @@ const ChatWindow = ({ id }: { id?: string }) => {
       },
     ]);
 
-    const messageHandler = async (data: any) => {
+    try {
+      // Use fetch with no-store to prevent caching
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Cache-Control": "no-cache",
+        },
+        body: JSON.stringify({ user_input: message, thread_id: threadId }),
+        // Ensure we're not caching the response
+        cache: "no-store",
+      });
+
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+
+      if (!res.body) {
+        throw new Error("No response body");
+      }
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder("utf-8");
+      let partialChunk = "";
+
+      // Process the stream
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+
+        // Decode the chunk
+        const chunk = decoder.decode(value, { stream: true });
+        console.log("Received chunk:", chunk);
+        partialChunk += chunk;
+
+        // Process complete lines (each JSON object should be on its own line)
+        let newlineIndex;
+        while ((newlineIndex = partialChunk.indexOf("\n")) !== -1) {
+          const jsonStr = partialChunk.slice(0, newlineIndex);
+          partialChunk = partialChunk.slice(newlineIndex + 1);
+
+          if (jsonStr.trim()) {
+            try {
+              const data = JSON.parse(jsonStr);
+              console.log("Processed data:", data);
+              await processStreamData(data);
+            } catch (e) {
+              console.error("Error parsing JSON:", e, jsonStr);
+            }
+          }
+        }
+      }
+
+      // Handle any remaining data
+      if (partialChunk.trim()) {
+        try {
+          const data = JSON.parse(partialChunk);
+          await processStreamData(data);
+        } catch (e) {
+          console.error("Error parsing final JSON:", e);
+        }
+      }
+
+      setChatHistory((prevHistory) => [
+        ...prevHistory,
+        ["human", message],
+        ["assistant", receivedMessage],
+      ]);
+    } catch (error) {
+      console.error("Error in sendMessage:", error);
+      toast.error("Failed to send message");
+    } finally {
+      setLoading(false);
+    }
+
+    async function processStreamData(data: any) {
+      console.log("Processing stream data:", data);
+
       if (data.type === "error") {
         toast.error(data.data);
         setLoading(false);
@@ -172,7 +249,7 @@ const ChatWindow = ({ id }: { id?: string }) => {
             {
               messageId: data.messageId,
               threadId: threadId!,
-              content: data.data, // First chunk
+              content: data.data,
               role: "assistant",
               createdAt: new Date(),
               sources: sources,
@@ -180,7 +257,6 @@ const ChatWindow = ({ id }: { id?: string }) => {
           ]);
           added = true;
         } else {
-          // Only append to existing message
           setMessages((prev) =>
             prev.map((message) => {
               if (message.messageId === data.messageId) {
@@ -193,59 +269,6 @@ const ChatWindow = ({ id }: { id?: string }) => {
 
         receivedMessage += data.data;
         setMessageAppeared(true);
-      }
-
-      if (data.type === "messageEnd") {
-        setChatHistory((prevHistory) => [
-          ...prevHistory,
-          ["human", message],
-          ["assistant", receivedMessage],
-        ]);
-
-        setLoading(false);
-
-        const lastMsg = messagesRef.current[messagesRef.current.length - 1];
-      }
-    };
-
-    const res = await fetch("/api/chat", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ user_input: message, thread_id: threadId }),
-    });
-
-    if (!res.body) {
-      throw new Error("No response body");
-    }
-
-    const reader = res.body?.getReader();
-    const decoder = new TextDecoder("utf-8");
-
-    let partialChunk = "";
-
-    while (true) {
-      const { value, done } = await reader.read();
-      if (done) break;
-
-      console.log("Value:", value);
-
-      partialChunk += decoder.decode(value, { stream: true });
-
-      console.log("Partial Chunk:", partialChunk);
-
-      try {
-        const messages = partialChunk.split("\n");
-        for (const msg of messages) {
-          console.log("MSG:", msg);
-          if (!msg.trim()) continue;
-          const json = JSON.parse(msg);
-          messageHandler(json);
-        }
-        partialChunk = "";
-      } catch (error) {
-        console.warn("Incomplete JSON, waiting for next chunk...");
       }
     }
   };

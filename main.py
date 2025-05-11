@@ -1,6 +1,7 @@
 import json
 import os
 import binascii
+import asyncio
 from typing import List
 from fastapi import FastAPI
 from fastapi.responses import StreamingResponse
@@ -102,20 +103,27 @@ async def generate_response(query: str, thread_id: str) -> AsyncIterable[str]:
         stream_mode="custom",
     ):
         yield data
-        print(data)
+        await asyncio.sleep(0.01)
+        print("Streaming:", data)
 
 
 @app.post("/api/chat")
 async def stream_response(request: ChatRequest):
-    print(request)
     generator = generate_response(request.user_input, request.thread_id)
 
+    async def stream_generator():
+        async for data in generator:
+            # Ensure each chunk is properly formatted and flushed
+            yield data
+
     return StreamingResponse(
-        generator,
+        stream_generator(),
         media_type="text/event-stream",
         headers={
-            "Cache-Control": "no-cache",
+            "Cache-Control": "no-cache, no-transform",
             "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",  # Disable Nginx buffering if you're using it
+            "Content-Type": "text/event-stream",
         },
     )
 

@@ -153,6 +153,8 @@ async def retriever(
             queries=search_queries, max_urls=20, max_results=3
         )
 
+        logger.info(f"Web Results: {web_results}")
+
         web_contexts, i, web_source_map = format_web_results_with_prefix(
             web_results, i, state.get("web_source_map", {})
         )
