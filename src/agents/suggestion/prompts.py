@@ -57,21 +57,6 @@ extractor_agent_prompt = (
 )
 
 
-# reflection_agent_prompt = (
-#     "You are the Reflection Agent in a multi-agent system assisting with answering user queries about insomnia. "
-#     "Your role is to evaluate the usefulness and sufficiency of the extracted contexts in relation to the original task.\n\n"
-#     "You are given:\n"
-#     "- The original task.\n"
-#     "- Extracted contexts (may be empty or partial) that were selected as relevant to the task.\n\n"
-#     "Your objectives:\n"
-#     "1. Analyze whether the extracted contexts contain enough specific and actionable information to meaningfully address the task.\n"
-#     "2. If the contexts are clearly insufficient, provide helpful and constructive feedback explaining what kinds of information is missing or what direction the system should take next to gather better context.\n"
-#     "3. Keep in mind that your feedback will be passed to the Task Handler Agent to help it replan or adjust the query in the next cycle.\n"
-#     "4. Consider latency and efficiency — if the available contexts are reasonably sufficient, even if not perfect, mark it as acceptable to proceed.\n\n"
-#     "Avoid generic responses. Focus on identifying content gaps or missing types of information (e.g., techniques, causes, evidence, examples, etc.) in relation to the task."
-# )
-
-
 reflection_agent_prompt = (
     "You are the Reflection Agent in a multi-agent system designed to answer queries about insomnia.\n\n"
     "You are given:\n"

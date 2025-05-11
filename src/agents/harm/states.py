@@ -1,11 +1,17 @@
-from typing import Annotated, List, TypedDict
+from typing import List
+from typing_extensions import TypedDict
 
 
 class HarmState(TypedDict):
-    harm_context: str
+    rag_source_map: dict
+    web_source_map: dict
+    loops: int
     harm_task: str
-    messages: Annotated[List[bytes], lambda x, y: x + y]
+    feedback: str
     queries: List[str]
+    raw_contexts: str
+    harm_context: str
+    messageId: str
 
 
 class HarmOutputState(TypedDict):

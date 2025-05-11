@@ -23,9 +23,6 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-# config = {"configurable": {"thread_id": "20"}}
-
-
 app_state = {"graph": None, "checkpointer": None, "pool": None}
 
 
@@ -105,6 +102,7 @@ async def generate_response(query: str, thread_id: str) -> AsyncIterable[str]:
         stream_mode="custom",
     ):
         yield data
+        print(data)
 
 
 @app.post("/api/chat")
