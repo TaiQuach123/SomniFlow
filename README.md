@@ -1,6 +1,14 @@
 <h1 align="center"><b>Multi-Agent Chatbot System for Insomnia</b></h1>
 
-
+### Table of Contents
+- [Quick Start](#quick-start)
+  - [Video Demo](#video-demo)
+  - [Architecture](#architecture)
+- [Introduction](#introduction)
+- [Usage](#usage)
+  - [Prerequisites](#prerequisites)
+  - [Setup](#setup)
+- [Project Structure](#project-structure)
 
 ## Quick Start
 ### Video Demo
@@ -12,6 +20,27 @@ https://github.com/user-attachments/assets/e9c39cde-039f-4ea8-9a9a-d4cd46a3844d
   1. Streaming tokens functionality is still under active development
   2. Display of intermediate reasoning steps is not yet implemented
 - Further system-wide optimizations are needed and in progress
+
+### Architecture
+
+<div align="center">
+  <table>
+    <tr>
+      <td align="center">
+        <img src="./assets/architecture-diagram.png" alt="System Architecture Diagram" width="450" height="500"/>
+        <br>
+        <em>Figure 1: High-level system architecture</em>
+      </td>
+      <td align="center">
+        <img src="./assets/agent-flow.png" alt="Agent Interaction Flow" width="450" height="500"/>
+        <br>
+        <em>Figure 2: Detailed flow of information between specialized agents</em>
+      </td>
+    </tr>
+  </table>
+</div>
+
+The system uses a multi-agent architecture where specialized agents collaborate to process user queries.
 
 ## Introduction
 
