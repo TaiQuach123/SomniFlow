@@ -4,8 +4,6 @@ from src.graph.states import MainGraphState
 from src.common.logging import get_logger
 from src.agents.response.prompts import response_agent_prompt
 from langgraph.config import get_stream_writer
-import os
-import binascii
 
 from pydantic_ai import Agent, RunContext
 from pydantic_ai.messages import (
@@ -14,7 +12,6 @@ from pydantic_ai.messages import (
     ModelResponse,
     TextPart,
     ModelRequest,
-    SystemPromptPart,
     UserPromptPart,
 )
 
@@ -28,7 +25,7 @@ logging.getLogger("httpx").setLevel(logging.WARNING)
 def get_response_agent() -> Agent:
     response_agent = create_llm_agent(
         provider="gemini",
-        model_name="gemini-2.0-flash",
+        model_name="gemini-2.0-flash-lite",
         result_type=str,
         deps_type=str,
         instructions=response_agent_prompt,
@@ -47,13 +44,15 @@ async def response_node(state: MainGraphState):
 
     contexts = "\n\n".join(
         [
-            state.get("suggestion_context", ""),
-            state.get("harm_context", ""),
-            state.get("factor_context", ""),
+            state.get("suggestion_context", "No suggestion context"),
+            state.get("harm_context", "No harm context"),
+            state.get("factor_context", "No factor context"),
         ]
     )
 
     contexts = contexts.strip()
+
+    logger.info(f"Contexts: {contexts}")
 
     message_history: list[ModelMessage] = []
     for message_row in state["messages"]:

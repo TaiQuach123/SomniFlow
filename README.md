@@ -4,7 +4,7 @@
 
 ## Quick Start
 ### Video Demo
-https://github.com/user-attachments/assets/db788493-a2be-4e55-ba4a-d38b8152e51d
+https://github.com/user-attachments/assets/e9c39cde-039f-4ea8-9a9a-d4cd46a3844d
 
 **Notes:**
 - The UI is heavily based on Perplexica's interface, adapted to work with this project's backend.
