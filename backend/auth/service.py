@@ -22,11 +22,16 @@ class AuthService:
         session.add(new_user)
         await session.flush()  # This will get us the user's ID without committing
 
-        # Create the auth provider with the hashed password
+        # Generate avatar URL using the first letter of the email
+        first_letter = user_data.email[0].upper()
+        avatar_url = f"https://ui-avatars.com/api/?name={first_letter}&background=random&size=128"
+
+        # Create the auth provider with the hashed password and avatar_url
         auth_provider = AuthProvider(
             user_id=new_user.id,
             provider="email",
             hashed_password=generate_passwd_hash(user_data.password),
+            avatar_url=avatar_url,
         )
         session.add(auth_provider)
 

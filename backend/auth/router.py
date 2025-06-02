@@ -1,6 +1,7 @@
 import json
 from datetime import timedelta, datetime, UTC
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 from authlib.integrations.starlette_client import OAuth
 from fastapi.responses import RedirectResponse
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, Cookie
@@ -13,7 +14,7 @@ from backend.auth.schemas import UserCreate, UserOut, Token, GoogleUserInfo
 from backend.database import get_async_session
 from backend.auth.config import jwt_config, oauth_config
 from backend.redis import redis_client
-from backend.auth.models import User
+from backend.auth.models import User, AuthProvider
 from backend.auth.dependencies import get_current_user
 
 
@@ -207,8 +208,26 @@ async def get_new_access_token(refresh_token: str = Cookie(None)):
 
 
 @router.get("/me")
-async def read_users_me(current_user: User = Depends(get_current_user)):
-    return {"authenticated": current_user is not None, "user": current_user}
+async def read_users_me(
+    user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_async_session),
+):
+    # Get the first auth_provider for the user
+    result = await session.execute(
+        select(AuthProvider).where(AuthProvider.user_id == user.id)
+    )
+    auth_provider = result.scalars().first()
+    avatar_url = auth_provider.avatar_url if auth_provider else None
+    return {
+        "authenticated": user is not None,
+        "user": {
+            "id": user.id,
+            "email": user.email,
+            "thread_ids": user.thread_ids,
+            "created_at": user.created_at,
+            "avatar_url": avatar_url,
+        },
+    }
 
 
 @router.post("/logout")
