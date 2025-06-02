@@ -1,5 +1,5 @@
 from datetime import timedelta, datetime, UTC
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, Cookie
 from fastapi.security.oauth2 import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 from authlib.integrations.starlette_client import OAuth
@@ -10,6 +10,8 @@ from backend.auth.schemas import UserCreate, UserOut, Token, GoogleUserInfo
 from backend.database import get_async_session
 from backend.auth.config import jwt_config, oauth_config
 from backend.redis import redis_client
+from fastapi.responses import RedirectResponse
+import json
 
 
 oauth = OAuth()
@@ -28,6 +30,7 @@ auth_service = AuthService()
 @router.get("/google/login")
 async def login_via_google(request: Request):
     redirect_uri = request.url_for("google_callback")
+    print(redirect_uri)
     return await oauth.google.authorize_redirect(request, redirect_uri)
 
 
@@ -69,11 +72,21 @@ async def google_callback(
         ttl = int(exp - datetime.now(UTC).timestamp())
         await redis_client.set(jti, str(user.id), ex=ttl)
 
-        return {
-            "access_token": access_token,
-            "refresh_token": refresh_token,
-            "token_type": "Bearer",
-        }
+        frontend_url = (
+            "http://localhost:3000/auth/callback"  # Or your deployed frontend URL
+        )
+        response = RedirectResponse(f"{frontend_url}?access_token={access_token}")
+        # Set the refresh token as an HTTP-only, Secure cookie
+        response.set_cookie(
+            key="refresh_token",
+            value=refresh_token,
+            httponly=True,
+            secure=True,  # Set to True in production (requires HTTPS)
+            samesite="lax",  # Or "strict" depending on your needs
+            max_age=60 * 60 * 24 * jwt_config.REFRESH_TOKEN_EXPIRE_DAYS,
+            path="/",
+        )
+        return response
 
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -122,15 +135,29 @@ async def login(
     ttl = int(exp - datetime.now(UTC).timestamp())
     await redis_client.set(jti, str(user.id), ex=ttl)
 
-    return {
-        "access_token": access_token,
-        "refresh_token": refresh_token,
-        "token_type": "Bearer",
-    }
+    response = Response(
+        content=json.dumps(
+            {
+                "access_token": access_token,
+                "token_type": "Bearer",
+            }
+        ),
+        media_type="application/json",
+    )
+    response.set_cookie(
+        key="refresh_token",
+        value=refresh_token,
+        httponly=True,
+        secure=True,  # Set to True in production
+        samesite="lax",
+        max_age=60 * 60 * 24 * jwt_config.REFRESH_TOKEN_EXPIRE_DAYS,
+        path="/",
+    )
+    return response
 
 
 @router.post("/refresh", response_model=Token)
-async def get_new_access_token(refresh_token: str = Depends(get_refresh_token)):
+async def get_new_access_token(refresh_token: str = Cookie(None)):
     token_details = decode_token(refresh_token)
     jti = token_details["jti"]
     jti_exists = await redis_client.exists(jti)
@@ -155,11 +182,25 @@ async def get_new_access_token(refresh_token: str = Depends(get_refresh_token)):
     new_ttl = int(new_exp - datetime.now(UTC).timestamp())
     await redis_client.set(new_jti, str(user_data["user_id"]), ex=new_ttl)
 
-    return {
-        "access_token": new_access_token,
-        "refresh_token": new_refresh_token,
-        "token_type": "Bearer",
-    }
+    response = Response(
+        content=json.dumps(
+            {
+                "access_token": new_access_token,
+                "token_type": "Bearer",
+            }
+        ),
+        media_type="application/json",
+    )
+    response.set_cookie(
+        key="refresh_token",
+        value=new_refresh_token,
+        httponly=True,
+        secure=True,  # Set to True in production
+        samesite="lax",
+        max_age=60 * 60 * 24 * jwt_config.REFRESH_TOKEN_EXPIRE_DAYS,
+        path="/",
+    )
+    return response
 
 
 @router.post("/logout")

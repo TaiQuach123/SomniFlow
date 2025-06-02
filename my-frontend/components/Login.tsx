@@ -1,4 +1,5 @@
-import React from "react";
+"use client";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -13,8 +14,66 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import { LogIn } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 export default function Login() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const router = useRouter();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+    try {
+      console.log("Username (email):", email);
+      console.log("Password:", password);
+      const body = new URLSearchParams();
+      body.append("username", email);
+      body.append("password", password);
+      const res = await fetch("/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: body.toString(),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        setError(data.detail || "Login failed");
+        setLoading(false);
+        return;
+      }
+      const data = await res.json();
+      console.log("Access Token:", data.access_token);
+      localStorage.setItem("access_token", data.access_token);
+      setLoading(false);
+      router.push("/");
+    } catch (err) {
+      setError("An error occurred. Please try again.");
+      setLoading(false);
+    }
+  };
+
+  async function refreshAccessToken() {
+    const res = await fetch("http://localhost:8000/auth/refresh", {
+      method: "POST",
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+    if (res.ok) {
+      const data = await res.json();
+      localStorage.setItem("access_token", data.access_token);
+      return data.access_token;
+    } else {
+      return null;
+    }
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <Card className="w-full max-w-lg min-h-[42rem]">
@@ -30,7 +89,7 @@ export default function Login() {
           </CardAction> */}
         </CardHeader>
         <CardContent>
-          <form>
+          <form onSubmit={handleSubmit}>
             <div className="flex flex-col gap-6">
               <div className="grid gap-2">
                 <Label htmlFor="email">Email</Label>
@@ -39,6 +98,9 @@ export default function Login() {
                   type="email"
                   placeholder="m@example.com"
                   required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  disabled={loading}
                 />
               </div>
               <div className="grid gap-2">
@@ -51,20 +113,36 @@ export default function Login() {
                     Forgot your password?
                   </a> */}
                 </div>
-                <Input id="password" type="password" required />
+                <Input
+                  id="password"
+                  type="password"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  disabled={loading}
+                />
               </div>
+              {error && (
+                <div className="text-red-500 text-sm text-center">{error}</div>
+              )}
             </div>
+            <Button
+              type="submit"
+              className="w-full flex items-center justify-center gap-2 mt-6"
+              disabled={loading}
+            >
+              {loading ? (
+                "Signing in..."
+              ) : (
+                <>
+                  Sign in
+                  <LogIn className="w-4 h-4 mr-2" />
+                </>
+              )}
+            </Button>
           </form>
         </CardContent>
         <CardFooter className="flex-col gap-2">
-          <Button
-            type="submit"
-            className="w-full flex items-center justify-center gap-2"
-          >
-            Sign in
-            <LogIn className="w-4 h-4 mr-2" />
-          </Button>
-
           <div className="flex items-center w-full my-4">
             <div className="flex-grow border-t border-gray-200"></div>
             <span className="mx-4 text-gray-400 font-normal">or</span>
@@ -73,6 +151,10 @@ export default function Login() {
           <Button
             variant="outline"
             className="w-full flex items-center justify-center gap-2"
+            onClick={() => {
+              window.location.href = "http://127.0.0.1:8000/auth/google/login";
+            }}
+            disabled={loading}
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"

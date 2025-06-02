@@ -90,7 +90,7 @@ export function AppSidebar() {
       <SidebarFooter className="bg-accent">
         <div className="flex items-center gap-4 justify-between">
           <Avatar>
-            <AvatarImage src="https://github.com/shadcn.png" />
+            <AvatarImage src="https://ssl.gstatic.com/accounts/ui/avatar_2x.png" />
             <AvatarFallback>CN</AvatarFallback>
           </Avatar>
           <h3 className="text-lg font-bold">Guest</h3>

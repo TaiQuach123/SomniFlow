@@ -1,4 +1,6 @@
-import React from "react";
+"use client";
+import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -15,6 +17,49 @@ import Link from "next/link";
 import { LogIn } from "lucide-react";
 
 export default function Register() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const router = useRouter();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setSuccess("");
+    if (password !== confirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
+    setLoading(true);
+    try {
+      console.log("Register Email:", email);
+      console.log("Register Password:", password);
+      const res = await fetch("/auth/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        setError(data.detail || "Registration failed");
+        setLoading(false);
+        return;
+      }
+      const data = await res.json();
+      setSuccess("Registration successful! Redirecting to login...");
+      setLoading(false);
+      setTimeout(() => router.push("/login"), 1500);
+    } catch (err) {
+      setError("An error occurred. Please try again.");
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <Card className="w-full max-w-lg min-h-[42rem]">
@@ -30,7 +75,7 @@ export default function Register() {
           </CardAction> */}
         </CardHeader>
         <CardContent>
-          <form>
+          <form onSubmit={handleSubmit}>
             <div className="flex flex-col gap-6">
               <div className="grid gap-2">
                 <Label htmlFor="email">Email</Label>
@@ -39,6 +84,9 @@ export default function Register() {
                   type="email"
                   placeholder="m@example.com"
                   required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  disabled={loading}
                 />
               </div>
               <div className="grid gap-2">
@@ -51,24 +99,52 @@ export default function Register() {
                     Forgot your password?
                   </a> */}
                 </div>
-                <Input id="password" type="password" required />
+                <Input
+                  id="password"
+                  type="password"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  disabled={loading}
+                />
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="confirmPassword">Confirm Password</Label>
-                <Input id="confirmPassword" type="password" required />
+                <Input
+                  id="confirmPassword"
+                  type="password"
+                  required
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  disabled={loading}
+                />
               </div>
+              {error && (
+                <div className="text-red-500 text-sm text-center">{error}</div>
+              )}
+              {success && (
+                <div className="text-green-600 text-sm text-center">
+                  {success}
+                </div>
+              )}
             </div>
+            <Button
+              type="submit"
+              className="w-full flex items-center justify-center gap-2 mt-6"
+              disabled={loading}
+            >
+              {loading ? (
+                "Signing up..."
+              ) : (
+                <>
+                  Sign up
+                  <LogIn className="w-4 h-4 mr-2" />
+                </>
+              )}
+            </Button>
           </form>
         </CardContent>
         <CardFooter className="flex-col gap-2">
-          <Button
-            type="submit"
-            className="w-full flex items-center justify-center gap-2"
-          >
-            Sign up
-            <LogIn className="w-4 h-4 mr-2" />
-          </Button>
-
           <div className="flex items-center w-full my-4">
             <div className="flex-grow border-t border-gray-200"></div>
             <span className="mx-4 text-gray-400 font-normal">or</span>
@@ -77,6 +153,10 @@ export default function Register() {
           <Button
             variant="outline"
             className="w-full flex items-center justify-center gap-2"
+            onClick={() => {
+              window.location.href = "http://127.0.0.1:8000/auth/google/login";
+            }}
+            disabled={loading}
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
