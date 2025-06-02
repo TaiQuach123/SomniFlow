@@ -3,8 +3,7 @@ import uuid
 from passlib.context import CryptContext
 from datetime import timedelta, datetime, UTC
 from backend.auth.config import jwt_config
-
-
+from fastapi import HTTPException
 # import logging
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -23,8 +22,15 @@ def create_access_token(
 ):
     payload = {}
     payload["user"] = user_data
-    payload["exp"] = datetime.now(UTC) + (
-        expiry if expiry else timedelta(minutes=jwt_config.ACCESS_TOKEN_EXPIRE_MINUTES)
+    payload["exp"] = int(
+        (
+            datetime.now(UTC)
+            + (
+                expiry
+                if expiry
+                else timedelta(minutes=jwt_config.ACCESS_TOKEN_EXPIRE_MINUTES)
+            )
+        ).timestamp()
     )
     payload["jti"] = str(uuid.uuid4())
     payload["refresh"] = refresh
@@ -45,7 +51,16 @@ def decode_token(token: str) -> dict:
             jwt_config.JWT_SECRET,
             algorithms=[jwt_config.JWT_ALGORITHM],
         )
+        required_claims = ["user", "exp", "jti", "refresh"]
+        for claim in required_claims:
+            if claim not in token_data:
+                raise HTTPException(
+                    status_code=401, detail=f"Token missing required claim: {claim}"
+                )
         return token_data
+
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Token has expired")
 
     except jwt.PyJWTError as e:
         print(f"Error decoding token: {e}")
