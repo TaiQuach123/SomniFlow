@@ -35,13 +35,28 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from "@/components/ui/tooltip";
 
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Button } from "./ui/button";
+import { useAuth } from "@/hooks/useAuth";
+
 export function AppSidebar() {
   const path = usePathname();
+  const { user, loading } = useAuth();
+  const router = useRouter();
+
+  const handleLogout = () => {
+    localStorage.removeItem("access_token");
+    router.refresh(); // reloads the current route
+  };
+
   const menuOptions = [
     {
       title: "Home",
@@ -58,11 +73,16 @@ export function AppSidebar() {
       icon: GalleryHorizontalEnd,
       path: "/library",
     },
-    {
-      title: "Sign In",
-      icon: LogIn,
-      path: "/sign-in",
-    },
+    // Only show Sign In if not authenticated
+    ...(!user && !loading
+      ? [
+          {
+            title: "Sign In",
+            icon: LogIn,
+            path: "/login",
+          },
+        ]
+      : []),
   ];
   return (
     <Sidebar>
@@ -79,7 +99,7 @@ export function AppSidebar() {
                   <SidebarMenuItem key={index}>
                     <SidebarMenuButton
                       asChild
-                      className={`p-5 py-6 hover:bg-transparent hover:font-bold ${
+                      className={`p-5 py-6 hover:bg-gray-200 dark:hover:bg-gray-700 hover:font-bold transition-transform duration-150 hover:scale-105 hover:shadow-md ${
                         (menu.path === "/" && path === "/") ||
                         (menu.path !== "/" && path?.includes(menu.path))
                           ? "font-bold"
@@ -95,22 +115,40 @@ export function AppSidebar() {
                 );
               })}
             </SidebarMenu>
-            <Button className="rounded-full mx-4 mt-4">Sign Up</Button>
+            {/* Only show Sign Up if not authenticated */}
+            {!user && !loading && (
+              <Button className="rounded-full mx-4 mt-4" asChild>
+                <Link href="/sign-up">Sign Up</Link>
+              </Button>
+            )}
           </SidebarContent>
         </SidebarGroup>
         <SidebarGroup />
       </SidebarContent>
       <SidebarFooter className="bg-accent">
-        <div className="flex items-center gap-4 justify-between">
-          <Avatar>
+        <div className="flex items-center gap-4 justify-between w-full">
+          <Avatar className="transition-all duration-200 group hover:scale-105 hover:shadow-lg hover:border-2 hover:border-gray-300 hover:bg-gray-200 dark:hover:border-gray-700 dark:hover:bg-gray-700 hover:ring-2 hover:ring-gray-300 dark:hover:ring-gray-700">
             <AvatarImage src="https://ssl.gstatic.com/accounts/ui/avatar_2x.png" />
             <AvatarFallback>CN</AvatarFallback>
           </Avatar>
-          <h3 className="text-lg font-bold">Guest</h3>
+          {!loading && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <h3 className="text-base font-medium truncate max-w-[120px] cursor-pointer">
+                  {user ? user.username || user.email : "Guest"}
+                </h3>
+              </TooltipTrigger>
+              <TooltipContent side="top" align="center">
+                {user ? user.username || user.email : "Guest"}
+              </TooltipContent>
+            </Tooltip>
+          )}
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Settings />
+              <span className="rounded-full bg-gray-100 dark:bg-gray-800 transition-all duration-200 p-1 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-700 hover:ring-2 hover:ring-gray-300 dark:hover:ring-gray-700">
+                <Settings className="cursor-pointer text-inherit transition-all duration-200 hover:rotate-12 hover:scale-110" />
+              </span>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-56" align="start">
               <DropdownMenuLabel>My Account</DropdownMenuLabel>

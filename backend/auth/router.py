@@ -1,8 +1,11 @@
+import json
 from datetime import timedelta, datetime, UTC
-from fastapi import APIRouter, Depends, HTTPException, Request, Response, Cookie
-from fastapi.security.oauth2 import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 from authlib.integrations.starlette_client import OAuth
+from fastapi.responses import RedirectResponse
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, Cookie
+from fastapi.security.oauth2 import OAuth2PasswordRequestForm
+
 from backend.auth.service import AuthService
 from backend.auth.utils import create_access_token, decode_token
 from backend.auth.dependencies import get_refresh_token
@@ -10,8 +13,8 @@ from backend.auth.schemas import UserCreate, UserOut, Token, GoogleUserInfo
 from backend.database import get_async_session
 from backend.auth.config import jwt_config, oauth_config
 from backend.redis import redis_client
-from fastapi.responses import RedirectResponse
-import json
+from backend.auth.models import User
+from backend.auth.dependencies import get_current_user
 
 
 oauth = OAuth()
@@ -201,6 +204,11 @@ async def get_new_access_token(refresh_token: str = Cookie(None)):
         path="/",
     )
     return response
+
+
+@router.get("/me")
+async def read_users_me(current_user: User = Depends(get_current_user)):
+    return {"authenticated": current_user is not None, "user": current_user}
 
 
 @router.post("/logout")
