@@ -66,7 +66,7 @@ The system demonstrates how complex agent-based workflows can be implemented to 
 ### Setup
 
 ```bash
-docker run --name my-redis -p 6379:6379 -d redis
+docker run -p 6379:6379 -d redis
 ```
 
 1. Start the Qdrant vector database:

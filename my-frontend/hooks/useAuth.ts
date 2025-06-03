@@ -4,6 +4,8 @@ interface User {
   id: string;
   email: string;
   username?: string;
+  thread_ids: string[];
+  avatar_url?: string;
   // Add more fields as needed
 }
 

@@ -1,31 +1,33 @@
-from pydantic import BaseModel
-from typing import List
+from pydantic import BaseModel, Field
+from typing import List, Literal
+from uuid import UUID, uuid4
 
 
-class ChatInput(BaseModel):
+class ChatRequest(BaseModel):
     user_input: str
-    thread_id: str
+    thread_id: UUID | None = Field(default_factory=uuid4)
 
 
 class Source(BaseModel):
     metadata: dict
-    pageContent: str
-
-
-class Chat(BaseModel):
-    threadId: str
-    title: str | None = None
-    createdAt: str | None = None
+    page_content: str
 
 
 class Message(BaseModel):
-    # id: int
-    threadId: str
+    id: UUID
+    thread_id: UUID
     content: str
-    role: str
+    role: Literal["user", "assistant"]
     metadata: str | None = None
 
 
-class ChatHistory(BaseModel):
-    chat: Chat
+class SessionMetadata(BaseModel):
+    thread_id: UUID
+    title: str | None = None
+    created_at: str | None = None
+    last_updated: str | None = None
+
+
+class ConversationHistory(BaseModel):
+    # session_metadata: SessionMetadata
     messages: List[Message]

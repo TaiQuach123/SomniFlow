@@ -36,3 +36,10 @@ async def get_refresh_token(token: str = Depends(oauth2_scheme)):
     if not user_details["refresh"]:
         raise HTTPException(status_code=401, detail="Please provide a refresh token")
     return token
+
+
+async def get_current_user_id(token: str = Depends(oauth2_scheme)):
+    user_details = decode_token(token)
+    if not user_details:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    return user_details["user"]["user_id"]

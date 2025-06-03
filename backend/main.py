@@ -1,3 +1,4 @@
+import os
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
 from backend.database import init_db
@@ -7,13 +8,35 @@ from backend.auth.router import router as auth_router
 from backend.api.router import router as api_router
 from starlette.middleware.sessions import SessionMiddleware
 from starlette.middleware.cors import CORSMiddleware
+from psycopg_pool import AsyncConnectionPool
+from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
+from src.graph.builder import create_main_graph
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await init_db()
+    pool = AsyncConnectionPool(
+        conninfo=os.getenv("POSTGRES_DB_URL"),
+        max_size=20,
+        kwargs={"autocommit": True, "prepare_threshold": 0},
+        open=False,
+    )
+    await pool.open()
+    checkpointer = AsyncPostgresSaver(pool)
+    await checkpointer.setup()
+
+    workflow = create_main_graph()
+    graph = workflow.compile(checkpointer=checkpointer)
+
+    app.state.graph = graph
+    app.state.checkpointer = checkpointer
+    app.state.pool = pool
+
     yield
+
     await close_redis()
+    await pool.close()
 
 
 app = FastAPI(lifespan=lifespan)

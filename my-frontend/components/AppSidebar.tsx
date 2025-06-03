@@ -139,7 +139,13 @@ export function AppSidebar() {
       <SidebarFooter className="bg-accent">
         <div className="flex items-center gap-4 justify-between w-full">
           <Avatar className="transition-all duration-200 group hover:scale-105 hover:shadow-lg hover:border-2 hover:border-gray-300 hover:bg-gray-200 dark:hover:border-gray-700 dark:hover:bg-gray-700 hover:ring-2 hover:ring-gray-300 dark:hover:ring-gray-700">
-            <AvatarImage src="https://ssl.gstatic.com/accounts/ui/avatar_2x.png" />
+            <AvatarImage
+              src={
+                user && user.avatar_url
+                  ? user.avatar_url
+                  : "https://ssl.gstatic.com/accounts/ui/avatar_2x.png"
+              }
+            />
             <AvatarFallback>CN</AvatarFallback>
           </Avatar>
           {!loading && (
