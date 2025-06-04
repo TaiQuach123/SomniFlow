@@ -43,8 +43,6 @@ async def get_chat_sessions(
 async def get_chat_history(
     thread_id: UUID, checkpointer: AsyncPostgresSaver = Depends(get_checkpointer)
 ):
-    print("Getting chat history from checkpointer")
-    print(thread_id)
     messages, created_at = await api_service.get_chat_history_from_checkpointer(
         str(thread_id), checkpointer
     )

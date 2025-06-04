@@ -10,6 +10,9 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubItem,
+  SidebarMenuSubButton,
 } from "@/components/ui/sidebar";
 import {
   Compass,
@@ -19,6 +22,9 @@ import {
   Search,
   User,
   Settings,
+  ChevronDown,
+  ChevronUp,
+  ChevronRight,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -47,11 +53,53 @@ import { usePathname, useRouter } from "next/navigation";
 import { Button } from "./ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { emitAuthChange } from "@/hooks/useAuth";
+import { useEffect, useState } from "react";
 
 export function AppSidebar() {
   const path = usePathname();
   const { user, loading } = useAuth();
   const router = useRouter();
+
+  // State for Library collapse
+  const [libraryOpen, setLibraryOpen] = useState(true);
+  // State for chat sessions
+  const [sessions, setSessions] = useState<any[]>([]);
+  const [sessionsLoading, setSessionsLoading] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      setSessionsLoading(true);
+      const accessToken =
+        typeof window !== "undefined"
+          ? localStorage.getItem("access_token")
+          : null;
+      fetch("/api/chats", {
+        credentials: "include",
+        headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (Array.isArray(data)) {
+            // Sort by last_updated descending
+            data.sort((a, b) => {
+              if (!a.last_updated) return 1;
+              if (!b.last_updated) return -1;
+              return (
+                new Date(b.last_updated).getTime() -
+                new Date(a.last_updated).getTime()
+              );
+            });
+            setSessions(data.slice(0, 3));
+          } else {
+            setSessions([]);
+          }
+        })
+        .catch(() => setSessions([]))
+        .finally(() => setSessionsLoading(false));
+    } else {
+      setSessions([]);
+    }
+  }, [user]);
 
   const handleLogout = async () => {
     try {
@@ -79,11 +127,7 @@ export function AppSidebar() {
       icon: Compass,
       path: "/discover",
     },
-    {
-      title: "Library",
-      icon: GalleryHorizontalEnd,
-      path: "/library",
-    },
+    // Library will be handled separately
     // Only show Sign In if not authenticated
     ...(!user && !loading
       ? [
@@ -125,11 +169,95 @@ export function AppSidebar() {
                   </SidebarMenuItem>
                 );
               })}
+              {/* Library collapsible menu item */}
+              <SidebarMenuItem>
+                <div className="flex flex-col w-full">
+                  <button
+                    className={`flex items-center w-full p-5 py-3 hover:bg-gray-200 dark:hover:bg-gray-700 hover:font-bold transition-transform duration-150 hover:scale-105 hover:shadow-md font-bold focus:outline-none text-base`}
+                    onClick={user ? () => setLibraryOpen((v) => !v) : undefined}
+                    aria-expanded={user ? libraryOpen : undefined}
+                    style={{ minHeight: 56 }}
+                    disabled={!user}
+                  >
+                    <GalleryHorizontalEnd className="h-8 w-8 mr-2" />
+                    <span className="flex-1 text-left">Library</span>
+                    {user &&
+                      (libraryOpen ? (
+                        <ChevronDown className="h-5 w-5 ml-2" />
+                      ) : (
+                        <ChevronRight className="h-5 w-5 ml-2" />
+                      ))}
+                  </button>
+                  {user && libraryOpen && (
+                    <SidebarMenuSub
+                      className="mt-1 !border-l-0"
+                      style={{ borderLeft: "none" }}
+                    >
+                      <div className="relative pl-4">
+                        {sessions.length > 0 && (
+                          <span
+                            className="absolute left-2 top-0 bottom-0 w-0.5 bg-gray-200 dark:bg-gray-700"
+                            style={{ borderRadius: 2 }}
+                            aria-hidden="true"
+                          />
+                        )}
+                        {sessionsLoading ? (
+                          <SidebarMenuSubItem>
+                            <span className="text-xs text-gray-500">
+                              Loading...
+                            </span>
+                          </SidebarMenuSubItem>
+                        ) : sessions.length === 0 ? (
+                          <SidebarMenuSubItem>
+                            <span className="text-xs text-gray-500">
+                              No sessions
+                            </span>
+                          </SidebarMenuSubItem>
+                        ) : (
+                          sessions.map((session) => {
+                            const isActive = path?.includes(session.thread_id);
+                            return (
+                              <SidebarMenuSubItem
+                                key={session.thread_id}
+                                className="min-w-0 group"
+                              >
+                                <SidebarMenuSubButton
+                                  asChild
+                                  isActive={isActive}
+                                  className="min-w-0 p-0"
+                                  style={{ maxWidth: 180, overflow: "hidden" }}
+                                >
+                                  <Link
+                                    href={`/search/${session.thread_id}`}
+                                    className={`
+                                      truncate min-w-0 max-w-[120px] overflow-hidden whitespace-nowrap font-medium text-gray-500 !text-gray-500 text-xs
+                                      flex items-center h-7 px-2 rounded-md
+                                      ${
+                                        isActive
+                                          ? "!bg-gray-300 dark:!bg-gray-800"
+                                          : "hover:!bg-gray-200 dark:hover:!bg-gray-700"
+                                      }
+                                      transition-colors duration-150
+                                    `}
+                                    title={session.title || "Untitled"}
+                                  >
+                                    {session.title || "Untitled"}
+                                  </Link>
+                                </SidebarMenuSubButton>
+                              </SidebarMenuSubItem>
+                            );
+                          })
+                        )}
+                      </div>
+                    </SidebarMenuSub>
+                  )}
+                </div>
+              </SidebarMenuItem>
             </SidebarMenu>
             {/* Only show Sign Up if not authenticated */}
             {!user && !loading && (
               <Button className="rounded-full mx-4 mt-4" asChild>
-                <Link href="/sign-up">Sign Up</Link>
+                <Link href="/register">Sign Up</Link>
               </Button>
             )}
           </SidebarContent>
