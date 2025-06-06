@@ -1,6 +1,6 @@
 from uuid import UUID
 from typing import List
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Body
 from fastapi.responses import StreamingResponse
 from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -14,6 +14,8 @@ from backend.api.schemas import (
     Message,
     SessionMetadata,
     ConversationHistory,
+    Interaction,
+    CreateInteractionRequest,
 )
 from backend.api.utils import generate_response
 
@@ -39,6 +41,13 @@ async def get_chat_sessions(
     ]
 
 
+@router.get("/interactions/{thread_id}", response_model=List[Interaction])
+async def get_interactions(
+    thread_id: str, session: AsyncSession = Depends(get_async_session)
+):
+    return await api_service.get_interactions(session, thread_id)
+
+
 @router.get("/chats/{thread_id}", response_model=ConversationHistory)
 async def get_chat_history(
     thread_id: UUID, checkpointer: AsyncPostgresSaver = Depends(get_checkpointer)
@@ -48,13 +57,6 @@ async def get_chat_history(
     )
     return ConversationHistory(
         messages=messages,
-        # Optionally add session_metadata if needed
-        # session_metadata=SessionMetadata(
-        #     thread_id=thread_id,
-        #     title=title,  # If you extract title from messages or elsewhere
-        #     created_at=created_at,
-        #     last_updated=created_at,
-        # ),
     )
 
 
@@ -90,3 +92,18 @@ async def stream_response(
     except Exception as e:
         # Catch-all for unexpected errors
         raise HTTPException(status_code=500, detail="An unexpected error occurred.")
+
+
+@router.post("/interactions")
+async def create_interaction_endpoint(
+    data: CreateInteractionRequest, session: AsyncSession = Depends(get_async_session)
+):
+    interaction = await api_service.create_interaction(
+        session=session,
+        thread_id=data.thread_id,
+        user_query=data.user_query,
+        tasks=data.tasks,
+        sources=data.sources,
+        assistant_response=data.assistant_response,
+    )
+    return {"status": "success", "interaction_id": str(interaction.id)}

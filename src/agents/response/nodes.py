@@ -59,6 +59,7 @@ async def response_node(state: MainGraphState):
         message_history.extend(ModelMessagesTypeAdapter.validate_json(message_row))
 
     response_agent = get_response_agent()
+    writer(json.dumps({"type": "messageStart"}) + "\n")
 
     async with response_agent.run_stream(
         state["user_input"],

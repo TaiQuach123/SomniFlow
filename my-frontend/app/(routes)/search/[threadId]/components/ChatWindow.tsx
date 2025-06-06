@@ -5,70 +5,66 @@ import Answer from "./Answer";
 import Sources from "./Sources";
 import Tasks from "./Tasks";
 
-type Message = {
-  role: string;
-  content: string;
-  [key: string]: any;
-};
+interface Interaction {
+  id: string;
+  thread_id: string;
+  user_query: string;
+  tasks?: any[];
+  sources?: any[];
+  assistant_response: string;
+  created_at: string;
+}
 
 interface ChatWindowProps {
-  messages: Message[];
+  interactions: Interaction[];
 }
-const tabs = [
-  { label: "Answer", icon: LucideSparkles },
-  { label: "Sources", icon: Database, badge: "10" },
-  { label: "Tasks", icon: LayoutList },
-];
-export default function ChatWindow({ messages }: ChatWindowProps) {
-  const firstUserMessage = messages?.find((msg) => msg.role === "user");
+
+export default function ChatWindow({ interactions }: ChatWindowProps) {
   return (
     <div className="w-full flex items-start flex-col">
-      {firstUserMessage && (
-        <h2 className="font-bold text-2xl text-left mt-16 ml-4">
-          {firstUserMessage.content}
-        </h2>
-      )}
-      <div className="w-full px-4 mt-4">
-        <Tabs defaultValue="Answer" className="w-full">
-          <TabsList>
-            {tabs.map((tab) => (
-              <TabsTrigger
-                key={tab.label}
-                value={tab.label}
-                className="flex items-center gap-2 relative"
-              >
-                <tab.icon className="w-4 h-4" />
-                {tab.label}
-                {tab.badge && (
-                  <span className="ml-2 bg-gray-200 text-gray-700 rounded-full px-2 py-0.5 text-xs font-semibold">
-                    {tab.badge}
-                  </span>
-                )}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-          <TabsContent value="Answer">
-            <Answer data="This is a dummy answer for demonstration." />
-          </TabsContent>
-          <TabsContent value="Sources">
-            <Sources
-              sources={[
-                "Source 1: https://example.com",
-                "Source 2: https://another.com",
-              ]}
-            />
-          </TabsContent>
-          <TabsContent value="Tasks">
-            <Tasks
-              tasks={[
-                "Task 1: Review the answer",
-                "Task 2: Check sources",
-                "Task 3: Complete follow-up",
-              ]}
-            />
-          </TabsContent>
-        </Tabs>
-      </div>
+      {interactions.map((interaction, idx) => (
+        <div key={interaction.id} className="mb-8 w-full">
+          <h2 className="font-bold text-2xl text-left mt-16 ml-4">
+            {interaction.user_query}
+          </h2>
+          <div className="w-full px-4 mt-4">
+            <Tabs defaultValue="Answer" className="w-full">
+              <TabsList>
+                <TabsTrigger
+                  value="Answer"
+                  className="flex items-center gap-2 relative"
+                >
+                  <LucideSparkles className="w-4 h-4" />
+                  Answer
+                </TabsTrigger>
+                <TabsTrigger
+                  value="Sources"
+                  className="flex items-center gap-2 relative"
+                >
+                  <Database className="w-4 h-4" />
+                  Sources
+                </TabsTrigger>
+                <TabsTrigger
+                  value="Tasks"
+                  className="flex items-center gap-2 relative"
+                >
+                  <LayoutList className="w-4 h-4" />
+                  Tasks
+                </TabsTrigger>
+              </TabsList>
+              <TabsContent value="Answer">
+                <Answer data={interaction.assistant_response} />
+              </TabsContent>
+              <TabsContent value="Sources">
+                <Sources sources={interaction.sources || []} />
+              </TabsContent>
+              <TabsContent value="Tasks">
+                <Tasks tasks={interaction.tasks || []} />
+              </TabsContent>
+            </Tabs>
+          </div>
+        </div>
+      ))}
     </div>
   );
 }

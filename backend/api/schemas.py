@@ -1,6 +1,7 @@
 from pydantic import BaseModel, Field
-from typing import List, Literal
+from typing import List, Literal, Any, Optional
 from uuid import UUID, uuid4
+from datetime import datetime
 
 
 class ChatRequest(BaseModel):
@@ -31,3 +32,24 @@ class SessionMetadata(BaseModel):
 class ConversationHistory(BaseModel):
     # session_metadata: SessionMetadata
     messages: List[Message]
+
+
+class Interaction(BaseModel):
+    id: UUID
+    thread_id: str
+    user_query: str
+    tasks: Optional[list[Any]] = None
+    sources: Optional[list[Any]] = None
+    assistant_response: str
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class CreateInteractionRequest(BaseModel):
+    thread_id: str
+    user_query: str
+    tasks: list = []
+    sources: list = []
+    assistant_response: str

@@ -54,6 +54,7 @@ import { Button } from "./ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { emitAuthChange } from "@/hooks/useAuth";
 import { useEffect, useState } from "react";
+import useSWR from "swr";
 
 export function AppSidebar() {
   const path = usePathname();
@@ -62,44 +63,28 @@ export function AppSidebar() {
 
   // State for Library collapse
   const [libraryOpen, setLibraryOpen] = useState(true);
-  // State for chat sessions
-  const [sessions, setSessions] = useState<any[]>([]);
-  const [sessionsLoading, setSessionsLoading] = useState(false);
-
-  useEffect(() => {
-    if (user) {
-      setSessionsLoading(true);
-      const accessToken =
-        typeof window !== "undefined"
-          ? localStorage.getItem("access_token")
-          : null;
-      fetch("/api/chats", {
+  // Use SWR for chat sessions
+  const {
+    data: sessions = [],
+    isLoading: sessionsLoading,
+    mutate,
+  } = useSWR(
+    user ? "/api/chats" : null,
+    (url) =>
+      fetch(url, {
         credentials: "include",
-        headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
-      })
-        .then((res) => res.json())
-        .then((data) => {
-          if (Array.isArray(data)) {
-            // Sort by last_updated descending
-            data.sort((a, b) => {
-              if (!a.last_updated) return 1;
-              if (!b.last_updated) return -1;
-              return (
-                new Date(b.last_updated).getTime() -
-                new Date(a.last_updated).getTime()
-              );
-            });
-            setSessions(data.slice(0, 3));
-          } else {
-            setSessions([]);
-          }
-        })
-        .catch(() => setSessions([]))
-        .finally(() => setSessionsLoading(false));
-    } else {
-      setSessions([]);
+        headers:
+          typeof window !== "undefined" && localStorage.getItem("access_token")
+            ? {
+                Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+              }
+            : {},
+      }).then((res) => res.json()),
+    {
+      revalidateOnFocus: true,
+      revalidateOnReconnect: true,
     }
-  }, [user]);
+  );
 
   const handleLogout = async () => {
     try {
@@ -214,39 +199,54 @@ export function AppSidebar() {
                             </span>
                           </SidebarMenuSubItem>
                         ) : (
-                          sessions.map((session) => {
-                            const isActive = path?.includes(session.thread_id);
-                            return (
-                              <SidebarMenuSubItem
-                                key={session.thread_id}
-                                className="min-w-0 group"
-                              >
-                                <SidebarMenuSubButton
-                                  asChild
-                                  isActive={isActive}
-                                  className="min-w-0 p-0"
-                                  style={{ maxWidth: 180, overflow: "hidden" }}
+                          [...sessions]
+                            .sort((a: any, b: any) => {
+                              if (!a.last_updated) return 1;
+                              if (!b.last_updated) return -1;
+                              return (
+                                new Date(b.last_updated).getTime() -
+                                new Date(a.last_updated).getTime()
+                              );
+                            })
+                            .slice(0, 3)
+                            .map((session: any) => {
+                              const isActive = path?.includes(
+                                session.thread_id
+                              );
+                              return (
+                                <SidebarMenuSubItem
+                                  key={session.thread_id}
+                                  className="min-w-0 group"
                                 >
-                                  <Link
-                                    href={`/search/${session.thread_id}`}
-                                    className={`
-                                      truncate min-w-0 max-w-[120px] overflow-hidden whitespace-nowrap font-medium text-gray-500 !text-gray-500 text-xs
-                                      flex items-center h-7 px-2 rounded-md
-                                      ${
-                                        isActive
-                                          ? "!bg-gray-300 dark:!bg-gray-800"
-                                          : "hover:!bg-gray-200 dark:hover:!bg-gray-700"
-                                      }
-                                      transition-colors duration-150
-                                    `}
-                                    title={session.title || "Untitled"}
+                                  <SidebarMenuSubButton
+                                    asChild
+                                    isActive={isActive}
+                                    className="min-w-0 p-0"
+                                    style={{
+                                      maxWidth: 180,
+                                      overflow: "hidden",
+                                    }}
                                   >
-                                    {session.title || "Untitled"}
-                                  </Link>
-                                </SidebarMenuSubButton>
-                              </SidebarMenuSubItem>
-                            );
-                          })
+                                    <Link
+                                      href={`/search/${session.thread_id}`}
+                                      className={`
+                                        truncate min-w-0 max-w-[120px] overflow-hidden whitespace-nowrap font-medium text-gray-500 !text-gray-500 text-xs
+                                        flex items-center h-7 px-2 rounded-md
+                                        ${
+                                          isActive
+                                            ? "!bg-gray-300 dark:!bg-gray-800"
+                                            : "hover:!bg-gray-200 dark:hover:!bg-gray-700"
+                                        }
+                                        transition-colors duration-150
+                                      `}
+                                      title={session.title || "Untitled"}
+                                    >
+                                      {session.title || "Untitled"}
+                                    </Link>
+                                  </SidebarMenuSubButton>
+                                </SidebarMenuSubItem>
+                              );
+                            })
                         )}
                       </div>
                     </SidebarMenuSub>

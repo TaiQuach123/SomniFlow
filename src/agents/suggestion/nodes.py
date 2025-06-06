@@ -110,12 +110,32 @@ async def retriever(
 ) -> Command[Literal["context_processor_node", END]]:
     logger.info("Suggestion Retriever Node")
     writer = get_stream_writer()
+    writer(
+        json.dumps(
+            {
+                "type": "step_retrieval",
+                "data": state["queries"],
+                "messageId": state["messageId"],
+            }
+        )
+        + "\n"
+    )
 
     rag_results = await retrieve_batch(
         queries=state["queries"],
         collection_name="test",
     )
 
+    writer(
+        json.dumps(
+            {
+                "type": "step_rag_evaluation",
+                "data": "RAG Evaluation",
+                "messageId": state["messageId"],
+            }
+        )
+        + "\n"
+    )
     suggestion_evaluator = create_suggestion_evaluator_agent()
     evaluator_result = await suggestion_evaluator.run(
         "",
@@ -133,6 +153,16 @@ async def retriever(
     )
 
     if evaluator_result.output.should_proceed:
+        writer(
+            json.dumps(
+                {
+                    "type": "taskEnd",
+                    "messageId": state["messageId"],
+                    "at_node": "retriever",
+                }
+            )
+            + "\n"
+        )
         return Command(
             goto=END,
             update={
@@ -146,6 +176,16 @@ async def retriever(
         else:
             search_queries = state["queries"]
 
+        writer(
+            json.dumps(
+                {
+                    "type": "step_web_search",
+                    "data": search_queries,
+                    "messageId": state["messageId"],
+                }
+            )
+            + "\n"
+        )
         ### Web Search
         web_search_pipeline = get_resource_manager().web_search_pipeline
 
@@ -153,7 +193,7 @@ async def retriever(
             queries=search_queries, max_urls=20, max_results=3
         )
 
-        logger.info(f"Web Results: {web_results}")
+        # logger.info(f"Web Results: {web_results}")
 
         web_contexts, i, web_source_map = format_web_results_with_prefix(
             web_results, i, state.get("web_source_map", {})
@@ -220,6 +260,16 @@ async def context_processor_node(
     )
 
     if reflection_result.output.should_proceed or state.get("loops", 0) > 2:
+        writer(
+            json.dumps(
+                {
+                    "type": "taskEnd",
+                    "messageId": state["messageId"],
+                    "at_node": "context_processor",
+                }
+            )
+            + "\n"
+        )
         return Command(
             goto=END,
             update={"suggestion_context": extracted_contexts, "loops": 0},

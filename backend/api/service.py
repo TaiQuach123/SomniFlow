@@ -1,13 +1,14 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from backend.api.models import SessionMetadata as SessionMetadataORM
-from sqlalchemy import select
+from sqlalchemy import select, and_
 from datetime import datetime, timezone
 from sqlalchemy.dialects.postgresql import insert
 import json
 from typing import List
 from pydantic_ai.messages import ModelMessage, ModelMessagesTypeAdapter, ModelRequest
-from backend.api.schemas import Message
+from backend.api.schemas import Message, Interaction as InteractionSchema
 import uuid
+from backend.api.models import Interaction
 
 
 class APIService:
@@ -20,27 +21,6 @@ class APIService:
     async def create_or_update_session(
         self, user_id, thread_id, title, session: AsyncSession
     ):
-        # --- Old logic (for reference) ---
-        # result = await session.execute(
-        #     select(SessionMetadataORM).where(SessionMetadataORM.thread_id == thread_id)
-        # )
-        # session_obj = result.scalar_one_or_none()
-        # if not session_obj:
-        #     new_session = SessionMetadataORM(
-        #         thread_id=thread_id,
-        #         user_id=user_id,
-        #         title=title,
-        #         last_updated=datetime.now(timezone.utc),
-        #     )
-        #     session.add(new_session)
-        #     await session.commit()
-        #     return new_session
-        # else:
-        #     session_obj.last_updated = datetime.now(timezone.utc)
-        #     await session.commit()
-        #     return session_obj
-
-        # --- New upsert logic ---
         now = datetime.now(timezone.utc)
         stmt = (
             insert(SessionMetadataORM)
@@ -96,3 +76,48 @@ class APIService:
             str(message_history[0].parts[0].timestamp) if message_history else None
         )
         return messages, created_at
+
+    async def create_interaction(
+        self,
+        session: AsyncSession,
+        thread_id: str,
+        user_query: str,
+        tasks: list,
+        sources: list,
+        assistant_response: str,
+    ) -> Interaction:
+        # Check for existing interaction with same thread_id, user_query, and assistant_response
+        result = await session.execute(
+            select(Interaction).where(
+                and_(
+                    Interaction.thread_id == thread_id,
+                    Interaction.user_query == user_query,
+                    Interaction.assistant_response == assistant_response,
+                )
+            )
+        )
+        existing = result.scalar_one_or_none()
+        if existing:
+            return existing
+        new_interaction = Interaction(
+            thread_id=thread_id,
+            user_query=user_query,
+            tasks=tasks,
+            sources=sources,
+            assistant_response=assistant_response,
+        )
+        session.add(new_interaction)
+        await session.commit()
+        await session.refresh(new_interaction)
+        return new_interaction
+
+    async def get_interactions(
+        self, session: AsyncSession, thread_id: str
+    ) -> list[InteractionSchema]:
+        result = await session.execute(
+            select(Interaction)
+            .where(Interaction.thread_id == thread_id)
+            .order_by(Interaction.created_at)
+        )
+        interactions = result.scalars().all()
+        return [InteractionSchema.model_validate(i) for i in interactions]
