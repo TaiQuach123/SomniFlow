@@ -91,5 +91,5 @@ async def response_node(state: MainGraphState):
                     ModelResponse(parts=[TextPart(content=response)]),
                 ]
             )
-        ]
+        ],
     }

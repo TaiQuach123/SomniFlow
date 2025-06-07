@@ -65,5 +65,5 @@ class EvaluatorOutput(BaseModel):
 
 class EvaluatorDeps(BaseModel):
     task: str
-    queries: list[str]
-    contexts: list[str]
+    queries: List[str]
+    contexts: str

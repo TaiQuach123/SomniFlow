@@ -1,4 +1,5 @@
 import json
+import asyncio
 import logging
 from typing import Literal
 from pydantic_ai import Agent, RunContext
@@ -10,9 +11,10 @@ from src.agents.suggestion.states import SuggestionState
 from src.tools.rag.retrieve import retrieve_batch
 from src.tools.utils.resource_manager import get_resource_manager
 from src.tools.utils.formatters import (
-    format_web_results_with_prefix,
-    format_rag_results_with_prefix,
-    format_rag_results,
+    get_rag_sources,
+    format_rag_sources,
+    get_web_sources,
+    format_web_sources,
 )
 from langgraph.graph import END
 from langgraph.types import Command
@@ -126,6 +128,10 @@ async def retriever(
         collection_name="test",
     )
 
+    rag_sources = get_rag_sources(rag_results, state.get("rag_sources", {}))
+    print("RAG Sources:", rag_sources.keys())
+    rag_contexts = format_rag_sources(rag_sources)
+
     writer(
         json.dumps(
             {
@@ -142,14 +148,20 @@ async def retriever(
         deps=EvaluatorDeps(
             task=state["suggestion_task"],
             queries=state["queries"],
-            contexts=format_rag_results(rag_results),
+            contexts=rag_contexts,
         ),
         model_settings={"temperature": 0.0},
     )
-    rag_contexts, i, rag_source_map = format_rag_results_with_prefix(
-        rag_results,
-        len(state.get("rag_source_map", "")) + len(state.get("web_source_map", "")),
-        state.get("rag_source_map", {}),
+
+    writer(
+        json.dumps(
+            {
+                "type": "rag_sources",
+                "data": rag_sources,
+                "messageId": state["messageId"],
+            }
+        )
+        + "\n"
     )
 
     if evaluator_result.output.should_proceed:
@@ -167,7 +179,7 @@ async def retriever(
             goto=END,
             update={
                 "suggestion_context": rag_contexts,
-                "rag_source_map": rag_source_map,
+                "rag_sources": rag_sources,
             },
         )
     else:
@@ -189,23 +201,31 @@ async def retriever(
         ### Web Search
         web_search_pipeline = get_resource_manager().web_search_pipeline
 
-        web_results = await web_search_pipeline.search_multiple_queries(
-            queries=search_queries, max_urls=20, max_results=3
+        (
+            unique_url_summaries,
+            per_query_top_results,
+        ) = await web_search_pipeline.gather_top_ranked_urls_for_queries(search_queries)
+        scrape_task = asyncio.create_task(
+            web_search_pipeline.scrape_unique_urls(per_query_top_results)
+        )
+        embedding_task = asyncio.create_task(
+            web_search_pipeline.get_query_embeddings_for_queries(search_queries)
+        )
+
+        url_to_content, query_embeddings = await asyncio.gather(
+            scrape_task, embedding_task
+        )
+
+        web_results = await web_search_pipeline.extract_relevant_snippets_for_queries(
+            search_queries, per_query_top_results, url_to_content, query_embeddings
         )
 
         # logger.info(f"Web Results: {web_results}")
 
-        web_contexts, i, web_source_map = format_web_results_with_prefix(
-            web_results, i, state.get("web_source_map", {})
-        )
+        web_sources = get_web_sources(web_results, state.get("web_sources", {}))
+        web_contexts = format_web_sources(web_sources, len(rag_sources))
 
-        web_sources = [
-            {
-                "metadata": {"title": data["title"], "url": source},
-                "pageContent": "\n---\n".join(data["contents"]),
-            }
-            for source, data in web_source_map.items()
-        ]
+        print("Web Sources: ", web_sources.keys())
 
         writer(
             json.dumps(
@@ -223,8 +243,8 @@ async def retriever(
             goto="context_processor_node",
             update={
                 "raw_contexts": merged_contexts,
-                "web_source_map": web_source_map,
-                "rag_source_map": rag_source_map,
+                "web_sources": web_sources,
+                "rag_sources": rag_sources,
             },
         )
 
@@ -272,7 +292,12 @@ async def context_processor_node(
         )
         return Command(
             goto=END,
-            update={"suggestion_context": extracted_contexts, "loops": 0},
+            update={
+                "suggestion_context": extracted_contexts,
+                "loops": 0,
+                "rag_sources": {},
+                "web_sources": {},
+            },
         )
     else:
         return Command(

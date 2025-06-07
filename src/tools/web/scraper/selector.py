@@ -6,16 +6,15 @@ from langchain_core.documents import Document
 from src.tools.utils.chunking import split_document_by_headers, jina_length_function
 from src.tools.utils.embeddings.api import (
     get_api_passage_embeddings,
-    get_api_query_embeddings,
 )
 
 
 @dataclass
 class SnippetConfig:
-    chunk_size: int = 512
+    chunk_size: int = 128
     chunk_overlap: int = 0
     max_tokens: int = 8192
-    window_size: int = 0
+    window_size: int = 1
     top_k: int = 3
 
 
@@ -202,7 +201,6 @@ class SemanticSnippetSelector:
             )
             enriched_chunks = self._enrich_chunks(chunks)
             chunk_batches = self._create_batches(enriched_chunks, config.max_tokens)
-
             # Get embeddings for all chunks - create and start tasks immediately
             embedding_tasks = [
                 asyncio.create_task(get_api_passage_embeddings(batch))
@@ -222,14 +220,12 @@ class SemanticSnippetSelector:
             # Calculate similarities
             similarities = self._cosine_similarity(
                 query_embedding, all_chunk_embeddings
-            )[0]
-
-            # print("Similarities:", similarities)
+            )
 
             windows = self._get_windowed_indexes(
                 similarities, window_size=config.window_size, top_k=config.top_k
             )
-            # print("Windows:", windows)
+
             snippets = []
             for window in windows:
                 snippet = SelectedSnippet(
