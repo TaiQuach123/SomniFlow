@@ -18,7 +18,7 @@ export default function ThreadPage() {
   const [userInput, setUserInput] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
   const [isStreaming, setIsStreaming] = useState(false);
-  const [hasAutoSent, setHasAutoSent] = useState(false);
+  const hasAutoSentRef = useRef(false);
 
   // New states for streaming protocol
   const [taskTimeline, setTaskTimeline] = useState<any[]>([]);
@@ -67,8 +67,13 @@ export default function ThreadPage() {
   // Auto-start chat if query param is present
   useEffect(() => {
     const query = searchParams?.get("query");
-    if (query && !isStreaming && interactions.length === 0 && !hasAutoSent) {
-      setHasAutoSent(true);
+    if (
+      query &&
+      !isStreaming &&
+      interactions.length === 0 &&
+      !hasAutoSentRef.current
+    ) {
+      hasAutoSentRef.current = true;
       setTimeout(() => {
         handleSend(undefined, query);
         // Remove query param from URL after auto-send
@@ -78,7 +83,7 @@ export default function ThreadPage() {
       }, 0);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams, interactions, isStreaming, hasAutoSent]);
+  }, [searchParams, interactions, isStreaming]);
 
   // Streaming handler
   const handleSend = async (e?: React.FormEvent, inputOverride?: string) => {
