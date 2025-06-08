@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Search } from "lucide-react";
+import { AiFillFilePdf } from "react-icons/ai";
 
 interface StreamingInteractionProps {
   userQuery: string;
@@ -12,17 +13,20 @@ interface StreamingInteractionProps {
 
 function getIcon(type: string, domain?: string) {
   if (type === "local")
+    return <AiFillFilePdf className="text-red-600 w-5 h-5" />;
+  if (type === "web" && domain) {
     return (
-      <span role="img" aria-label="pdf">
-        📄
-      </span>
+      <img
+        src={`https://icon.horse/icon/${domain}`}
+        alt={domain}
+        className="w-5 h-5 rounded"
+        style={{ background: "#fff" }}
+        onError={(e) => {
+          (e.target as HTMLImageElement).src = "/favicon.ico";
+        }}
+      />
     );
-  if (type === "web")
-    return (
-      <span role="img" aria-label="web">
-        🌐
-      </span>
-    );
+  }
   return (
     <span role="img" aria-label="file">
       📁
@@ -107,7 +111,7 @@ export default function StreamingInteraction({
                                   <a
                                     key={i}
                                     href={
-                                      src.url.startsWith("http")
+                                      src.url && src.url.startsWith("http")
                                         ? src.url
                                         : undefined
                                     }
@@ -116,11 +120,22 @@ export default function StreamingInteraction({
                                     className="flex items-center gap-2 px-3 py-1 bg-gray-100 rounded shadow text-sm hover:bg-blue-100 transition cursor-pointer"
                                     title={src.title || src.url}
                                   >
-                                    {getIcon(src.type, src.domain)}
+                                    {getIcon(
+                                      src.type,
+                                      src.domain ||
+                                        (src.url &&
+                                          src.url.match(
+                                            /https?:\/\/(www\.)?([^\/]+)/
+                                          )?.[2])
+                                    )}
                                     <span className="font-semibold">
                                       {src.type === "local"
                                         ? src.url.split("/").pop()
-                                        : src.domain || src.url}
+                                        : src.domain ||
+                                          (src.url &&
+                                            src.url.match(
+                                              /https?:\/\/(www\.)?([^\/]+)/
+                                            )?.[2])}
                                     </span>
                                   </a>
                                 ))
