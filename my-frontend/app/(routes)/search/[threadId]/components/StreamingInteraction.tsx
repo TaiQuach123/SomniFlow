@@ -1,8 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, ElementType } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Search } from "lucide-react";
 import { AiFillFilePdf } from "react-icons/ai";
 import Sources from "./Sources";
+import ReactMarkdown from "react-markdown";
 
 interface StreamingInteractionProps {
   userQuery: string;
@@ -35,6 +36,58 @@ function getIcon(type: string, domain?: string) {
       📁
     </span>
   );
+}
+
+function renderWithCitations(text: string, sources: any[]) {
+  const citationRegex = /\[(\d+)\]/g;
+  const parts: React.ReactNode[] = [];
+  let lastIndex = 0;
+  let match;
+  while ((match = citationRegex.exec(text)) !== null) {
+    const idx = match.index;
+    const refNum = parseInt(match[1], 10);
+    if (idx > lastIndex) {
+      parts.push(text.slice(lastIndex, idx));
+    }
+    const source = sources.find((s: any) => s.ref === refNum);
+    if (source && source.url) {
+      parts.push(
+        <a
+          key={"cite-" + refNum + "-" + idx}
+          href={source.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-block align-baseline mx-1 px-2 py-0.5 rounded bg-neutral-800 text-white text-xs font-bold"
+        >
+          {refNum}
+        </a>
+      );
+    } else {
+      parts.push(match[0]);
+    }
+    lastIndex = idx + match[0].length;
+  }
+  if (lastIndex < text.length) {
+    parts.push(text.slice(lastIndex));
+  }
+  return parts;
+}
+
+function makeCitationRenderer(
+  Tag: ElementType,
+  sources: any[]
+): React.FunctionComponent<{ children?: React.ReactNode }> {
+  return function Comp({ children }) {
+    return (
+      <Tag className="mb-2 leading-relaxed">
+        {React.Children.map(children, (child, i) =>
+          typeof child === "string"
+            ? renderWithCitations(child, sources)
+            : child
+        )}
+      </Tag>
+    );
+  };
 }
 
 export default function StreamingInteraction({
@@ -177,8 +230,20 @@ export default function StreamingInteraction({
           <div className="w-full my-8">
             <Sources sources={sources || []} />
             <div className="p-4 bg-green-50 rounded">
-              <span className="font-semibold"></span>
-              <span>{streamedAnswer}</span>
+              <ReactMarkdown
+                components={{
+                  p: makeCitationRenderer("p", sources),
+                  li: makeCitationRenderer("li", sources),
+                  h1: makeCitationRenderer("h1", sources),
+                  h2: makeCitationRenderer("h2", sources),
+                  h3: makeCitationRenderer("h3", sources),
+                  h4: makeCitationRenderer("h4", sources),
+                  h5: makeCitationRenderer("h5", sources),
+                  h6: makeCitationRenderer("h6", sources),
+                }}
+              >
+                {streamedAnswer}
+              </ReactMarkdown>
               <span className="animate-pulse text-gray-400 ml-2">|</span>
             </div>
           </div>

@@ -1,4 +1,5 @@
-import React from "react";
+import React, { ElementType } from "react";
+import ReactMarkdown from "react-markdown";
 
 interface Source {
   ref?: number;
@@ -6,26 +7,17 @@ interface Source {
   [key: string]: any;
 }
 
-export default function Answer({
-  data,
-  sources = [],
-}: {
-  data: string;
-  sources?: Source[];
-}) {
-  // Replace [n] with clickable links if ref matches a source
+function renderWithCitations(text: string, sources: Source[]) {
   const citationRegex = /\[(\d+)\]/g;
   const parts: React.ReactNode[] = [];
   let lastIndex = 0;
   let match;
-  while ((match = citationRegex.exec(data)) !== null) {
+  while ((match = citationRegex.exec(text)) !== null) {
     const idx = match.index;
     const refNum = parseInt(match[1], 10);
-    // Push text before the citation
     if (idx > lastIndex) {
-      parts.push(data.slice(lastIndex, idx));
+      parts.push(text.slice(lastIndex, idx));
     }
-    // Find the source with this ref
     const source = sources.find((s) => s.ref === refNum);
     if (source && source.url) {
       parts.push(
@@ -44,9 +36,52 @@ export default function Answer({
     }
     lastIndex = idx + match[0].length;
   }
-  // Push any remaining text
-  if (lastIndex < data.length) {
-    parts.push(data.slice(lastIndex));
+  if (lastIndex < text.length) {
+    parts.push(text.slice(lastIndex));
   }
-  return <div className="p-4 bg-green-50 rounded">{parts}</div>;
+  return parts;
+}
+
+function makeCitationRenderer(
+  Tag: ElementType,
+  sources: Source[]
+): React.FunctionComponent<{ children?: React.ReactNode }> {
+  return function Comp({ children }) {
+    return (
+      <Tag className="mb-2 leading-relaxed">
+        {React.Children.map(children, (child, i) =>
+          typeof child === "string"
+            ? renderWithCitations(child, sources)
+            : child
+        )}
+      </Tag>
+    );
+  };
+}
+
+export default function Answer({
+  data,
+  sources = [],
+}: {
+  data: string;
+  sources?: Source[];
+}) {
+  return (
+    <div className="p-4 bg-green-50 rounded">
+      <ReactMarkdown
+        components={{
+          p: makeCitationRenderer("p", sources),
+          li: makeCitationRenderer("li", sources),
+          h1: makeCitationRenderer("h1", sources),
+          h2: makeCitationRenderer("h2", sources),
+          h3: makeCitationRenderer("h3", sources),
+          h4: makeCitationRenderer("h4", sources),
+          h5: makeCitationRenderer("h5", sources),
+          h6: makeCitationRenderer("h6", sources),
+        }}
+      >
+        {data}
+      </ReactMarkdown>
+    </div>
+  );
 }
