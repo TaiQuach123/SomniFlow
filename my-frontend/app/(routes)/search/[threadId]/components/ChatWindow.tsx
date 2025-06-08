@@ -53,7 +53,11 @@ export default function ChatWindow({ interactions }: ChatWindowProps) {
                 </TabsTrigger>
               </TabsList>
               <TabsContent value="Answer">
-                <Answer data={interaction.assistant_response} />
+                <Sources sources={interaction.sources || []} />
+                <Answer
+                  data={interaction.assistant_response}
+                  sources={interaction.sources || []}
+                />
               </TabsContent>
               <TabsContent value="Sources">
                 <Sources sources={interaction.sources || []} />

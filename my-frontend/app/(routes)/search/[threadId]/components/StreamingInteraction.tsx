@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Search } from "lucide-react";
 import { AiFillFilePdf } from "react-icons/ai";
+import Sources from "./Sources";
 
 interface StreamingInteractionProps {
   userQuery: string;
@@ -9,9 +10,11 @@ interface StreamingInteractionProps {
   taskTimeline: any[];
   showSkeleton: boolean;
   streamedAnswer: string;
+  sources: any[];
 }
 
 function getIcon(type: string, domain?: string) {
+  console.log(type, domain);
   if (type === "local")
     return <AiFillFilePdf className="text-red-600 w-5 h-5" />;
   if (type === "web" && domain) {
@@ -40,6 +43,7 @@ export default function StreamingInteraction({
   taskTimeline,
   showSkeleton,
   streamedAnswer,
+  sources,
 }: StreamingInteractionProps) {
   // Collapsed state for each parent task
   const [collapsed, setCollapsed] = useState<{ [k: number]: boolean }>({});
@@ -54,7 +58,7 @@ export default function StreamingInteraction({
       <div className="w-full px-4 mt-4">
         {showTimeline ? (
           <div className="w-full my-8">
-            <div className="font-semibold mb-2">Task Timeline</div>
+            <div className="font-semibold mb-2"></div>
             <ol className="border-l-2 border-yellow-400 pl-4">
               {taskTimeline.map((task, idx) => (
                 <li key={idx} className="mb-4 relative">
@@ -171,8 +175,9 @@ export default function StreamingInteraction({
           </div>
         ) : streamedAnswer ? (
           <div className="w-full my-8">
+            <Sources sources={sources || []} />
             <div className="p-4 bg-green-50 rounded">
-              <span className="font-semibold">Answer: </span>
+              <span className="font-semibold"></span>
               <span>{streamedAnswer}</span>
               <span className="animate-pulse text-gray-400 ml-2">|</span>
             </div>

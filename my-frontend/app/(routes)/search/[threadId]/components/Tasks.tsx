@@ -3,6 +3,8 @@ import { Search } from "lucide-react";
 import { AiFillFilePdf } from "react-icons/ai";
 
 function getIcon(type: string, domain?: string) {
+  console.log("type", type);
+  console.log("domain", domain);
   if (type === "local")
     return <AiFillFilePdf className="text-red-600 w-5 h-5" />;
   if (type === "web" && domain) {
@@ -32,7 +34,7 @@ export default function Tasks({ tasks }: { tasks: any[] }) {
   };
   return (
     <div className="p-4 bg-yellow-50 rounded">
-      <div className="font-semibold mb-2">Tasks Timeline:</div>
+      <div className="font-semibold mb-2"></div>
       <ol className="border-l-2 border-yellow-400 pl-4">
         {tasks.map((task, idx) => (
           <li key={idx} className="mb-4 relative">

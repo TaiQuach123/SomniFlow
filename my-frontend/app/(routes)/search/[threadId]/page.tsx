@@ -241,7 +241,10 @@ export default function ThreadPage() {
               break;
             case "webSearchSources":
               if (parentTask && parentTask.type === "webSearch") {
-                parentTask.reading = event.data || [];
+                parentTask.reading = (event.data || []).map((src: any) => ({
+                  type: "web",
+                  ...src,
+                }));
                 setStructuredTimeline([...timeline]);
               }
               break;
@@ -411,6 +414,7 @@ export default function ThreadPage() {
               taskTimeline={structuredTimeline}
               showSkeleton={showSkeleton}
               streamedAnswer={streamedAnswer}
+              sources={streamingSources}
             />
           )}
         </div>
