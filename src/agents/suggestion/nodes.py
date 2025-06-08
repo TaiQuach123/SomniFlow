@@ -112,10 +112,11 @@ async def retriever(
 ) -> Command[Literal["context_processor_node", END]]:
     logger.info("Suggestion Retriever Node")
     writer = get_stream_writer()
+    writer(json.dumps({"type": "retrievalStart", "data": "Searching RAG"}) + "\n")
     writer(
         json.dumps(
             {
-                "type": "step_retrieval",
+                "type": "retrievalQueries",
                 "data": state["queries"],
                 "messageId": state["messageId"],
             }
@@ -129,13 +130,25 @@ async def retriever(
     )
 
     rag_sources = get_rag_sources(rag_results, state.get("rag_sources", {}))
+    # writer(
+    #     json.dumps(
+    #         {
+    #             "type": "rag_sources",
+    #             "data": rag_sources,
+    #             "messageId": state["messageId"],
+    #         }
+    #     )
+    #     + "\n"
+    # )
+    writer(json.dumps({"type": "retrievalSources", "data": rag_sources}) + "\n")
+    writer(json.dumps({"type": "retrievalEnd"}) + "\n")
     print("RAG Sources:", rag_sources.keys())
     rag_contexts = format_rag_sources(rag_sources)
 
     writer(
         json.dumps(
             {
-                "type": "step_rag_evaluation",
+                "type": "step",
                 "data": "RAG Evaluation",
                 "messageId": state["messageId"],
             }
@@ -153,18 +166,8 @@ async def retriever(
         model_settings={"temperature": 0.0},
     )
 
-    writer(
-        json.dumps(
-            {
-                "type": "rag_sources",
-                "data": rag_sources,
-                "messageId": state["messageId"],
-            }
-        )
-        + "\n"
-    )
-
     if evaluator_result.output.should_proceed:
+        writer(json.dumps({"type": "sources", "data": [rag_sources]}) + "\n")
         writer(
             json.dumps(
                 {
@@ -179,7 +182,7 @@ async def retriever(
             goto=END,
             update={
                 "suggestion_context": rag_contexts,
-                "rag_sources": rag_sources,
+                "rag_sources": {},
             },
         )
     else:
@@ -188,10 +191,11 @@ async def retriever(
         else:
             search_queries = state["queries"]
 
+        writer(json.dumps({"type": "webSearchStart", "data": "Searching Web"}) + "\n")
         writer(
             json.dumps(
                 {
-                    "type": "step_web_search",
+                    "type": "webSearchQueries",
                     "data": search_queries,
                     "messageId": state["messageId"],
                 }
@@ -205,6 +209,17 @@ async def retriever(
             unique_url_summaries,
             per_query_top_results,
         ) = await web_search_pipeline.gather_top_ranked_urls_for_queries(search_queries)
+
+        writer(
+            json.dumps(
+                {
+                    "type": "webSearchSources",
+                    "data": unique_url_summaries,
+                    "messageId": state["messageId"],
+                }
+            )
+            + "\n"
+        )
         scrape_task = asyncio.create_task(
             web_search_pipeline.scrape_unique_urls(per_query_top_results)
         )
@@ -227,16 +242,17 @@ async def retriever(
 
         print("Web Sources: ", web_sources.keys())
 
-        writer(
-            json.dumps(
-                {
-                    "type": "sources",
-                    "data": web_sources,
-                    "messageId": state["messageId"],
-                }
-            )
-            + "\n"
-        )
+        # writer(
+        #     json.dumps(
+        #         {
+        #             "type": "sources",
+        #             "data": web_sources,
+        #             "messageId": state["messageId"],
+        #         }
+        #     )
+        #     + "\n"
+        # )
+        writer(json.dumps({"type": "webSearchEnd"}) + "\n")
 
         merged_contexts = "\n\n".join([rag_contexts, web_contexts])
         return Command(
@@ -254,6 +270,7 @@ async def context_processor_node(
 ) -> Command[Literal["task_handler_node", END]]:
     logger.info("Suggestion Context Processor Node")
     writer = get_stream_writer()
+    writer(json.dumps({"type": "step", "data": "Context Processor"}) + "\n")
     extractor_agent = create_suggestion_extractor_agent()
     extractor_result = await extractor_agent.run(
         "",
@@ -279,7 +296,16 @@ async def context_processor_node(
         model_settings={"temperature": 0.0},
     )
 
-    if reflection_result.output.should_proceed or state.get("loops", 0) > 2:
+    if reflection_result.output.should_proceed or state.get("loops", 0) > 1:
+        writer(
+            json.dumps(
+                {
+                    "type": "sources",
+                    "data": [state["rag_sources"], state["web_sources"]],
+                }
+            )
+            + "\n"
+        )
         writer(
             json.dumps(
                 {

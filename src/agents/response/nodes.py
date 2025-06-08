@@ -44,15 +44,15 @@ async def response_node(state: MainGraphState):
 
     contexts = "\n\n".join(
         [
-            state.get("suggestion_context", "No suggestion context"),
-            state.get("harm_context", "No harm context"),
-            state.get("factor_context", "No factor context"),
+            state.get("suggestion_context", ""),
+            state.get("harm_context", ""),
+            state.get("factor_context", ""),
         ]
     )
 
     contexts = contexts.strip()
 
-    logger.info(f"Contexts: {contexts}")
+    # logger.info(f"Contexts: {contexts}")
 
     message_history: list[ModelMessage] = []
     for message_row in state["messages"]:
