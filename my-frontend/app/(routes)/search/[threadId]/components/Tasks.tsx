@@ -33,14 +33,13 @@ export default function Tasks({ tasks }: { tasks: any[] }) {
     setCollapsed((prev) => ({ ...prev, [idx]: !prev[idx] }));
   };
   return (
-    <div className="p-4 bg-yellow-50 rounded">
-      <div className="font-semibold mb-2"></div>
+    <div className="bg-white dark:bg-neutral-900 rounded">
       <ol className="border-l-2 border-yellow-400 pl-4">
         {tasks.map((task, idx) => (
           <li key={idx} className="mb-4 relative">
             <div className="absolute -left-2 top-1 w-3 h-3 bg-yellow-400 rounded-full border-2 border-white" />
             {task.type === "retrieval" || task.type === "webSearch" ? (
-              <div className="bg-white rounded shadow p-4">
+              <div className="bg-white dark:bg-neutral-800 rounded shadow p-4">
                 <div
                   className="flex items-center justify-between cursor-pointer"
                   onClick={() => toggleCollapse(idx)}
@@ -93,7 +92,7 @@ export default function Tasks({ tasks }: { tasks: any[] }) {
                               }
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="flex items-center gap-2 px-3 py-1 bg-gray-100 rounded shadow text-sm hover:bg-blue-100 transition cursor-pointer"
+                              className="flex items-center gap-2 px-3 py-1 bg-gray-100 dark:bg-neutral-700 rounded shadow text-sm hover:bg-blue-100 transition cursor-pointer"
                               title={src.title || src.url}
                             >
                               {getIcon(

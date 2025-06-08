@@ -67,7 +67,7 @@ export default function Answer({
   sources?: Source[];
 }) {
   return (
-    <div className="p-4 bg-green-50 rounded">
+    <div className="bg-white dark:bg-neutral-900 rounded">
       <ReactMarkdown
         components={{
           p: makeCitationRenderer("p", sources),

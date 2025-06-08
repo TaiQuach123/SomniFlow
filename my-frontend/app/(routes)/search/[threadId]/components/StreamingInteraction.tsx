@@ -229,7 +229,7 @@ export default function StreamingInteraction({
         ) : streamedAnswer ? (
           <div className="w-full my-8">
             <Sources sources={sources || []} />
-            <div className="p-4 bg-green-50 rounded">
+            <div className="bg-white dark:bg-neutral-900 rounded">
               <ReactMarkdown
                 components={{
                   p: makeCitationRenderer("p", sources),
