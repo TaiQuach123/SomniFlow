@@ -21,13 +21,14 @@ export default function ThreadPage() {
   const hasAutoSentRef = useRef(false);
 
   // New states for streaming protocol
-  const [taskTimeline, setTaskTimeline] = useState<any[]>([]);
+  const [structuredTimeline, setStructuredTimeline] = useState<any[]>([]);
   const [showTimeline, setShowTimeline] = useState(false);
   const [showSkeleton, setShowSkeleton] = useState(false);
   const [streamedAnswer, setStreamedAnswer] = useState("");
   const [streamingSources, setStreamingSources] = useState<any[]>([]);
-  const [streamingTasks, setStreamingTasks] = useState<any[]>([]);
   const [showTabs, setShowTabs] = useState(true);
+  const [currentParentTask, setCurrentParentTask] = useState<any | null>(null);
+  const [sourceCards, setSourceCards] = useState<any[]>([]);
 
   const chatAreaRef = useRef<HTMLDivElement>(null);
 
@@ -94,10 +95,11 @@ export default function ThreadPage() {
     setShowTabs(false);
     setShowTimeline(false);
     setShowSkeleton(false);
-    setTaskTimeline([]);
+    setStructuredTimeline([]);
     setStreamedAnswer("");
     setStreamingSources([]);
-    setStreamingTasks([]);
+    setSourceCards([]);
+    setCurrentParentTask(null);
 
     const newInteraction = {
       id: "streaming",
@@ -138,17 +140,18 @@ export default function ThreadPage() {
     const decoder = new TextDecoder();
     let done = false;
     let assistantResponse = "";
-    let tasks: any[] = [];
-    let sources: any[] = [];
     let timeline: any[] = [];
+    let parentTask: any = null;
     let messageId = null;
+    let tempSources: any[] = [];
+    let refCounter = 1;
+    let latestSources: any[] = [];
 
     while (!done) {
       const { value, done: streamDone } = await reader.read();
       done = streamDone;
       if (value) {
         const chunk = decoder.decode(value, { stream: true });
-        // Each chunk may contain multiple JSON objects separated by newlines
         const lines = chunk.split("\n").filter(Boolean);
         for (const line of lines) {
           let event;
@@ -158,24 +161,149 @@ export default function ThreadPage() {
             console.error("Failed to parse event", err, line);
             continue;
           }
+          console.log("[STREAM EVENT] type:", event.type, event);
           switch (event.type) {
             case "taskStart":
               setShowTimeline(true);
-              setTaskTimeline([]);
+              setStructuredTimeline([]);
               timeline = [];
+              parentTask = null;
               messageId = event.messageId;
               break;
-            default:
-              // Collect all step* types for tasks
-              if (event.type && event.type.startsWith("step")) {
-                timeline.push(event);
-                setTaskTimeline([...timeline]);
+            case "step":
+              // General step
+              timeline.push({ type: "step", label: event.data });
+              setStructuredTimeline([...timeline]);
+              break;
+            case "retrievalStart":
+              parentTask = {
+                type: "retrieval",
+                label: event.data || "Searching local data",
+                searching: [],
+                reading: [],
+                collapsed: false,
+              };
+              timeline.push(parentTask);
+              setStructuredTimeline([...timeline]);
+              break;
+            case "retrievalQueries":
+              if (parentTask && parentTask.type === "retrieval") {
+                parentTask.searching = event.data || [];
+                setStructuredTimeline([...timeline]);
               }
-              // Collect all sources type for sources
-              if (event.type === "sources") {
-                sources.push({ data: event.data });
-                setStreamingSources([...sources]);
+              break;
+            case "retrievalSources":
+              if (parentTask && parentTask.type === "retrieval") {
+                // Convert object to array of cards for Reading section
+                let readingCards = [];
+                if (
+                  event.data &&
+                  typeof event.data === "object" &&
+                  !Array.isArray(event.data)
+                ) {
+                  Object.entries(event.data).forEach(
+                    ([filename, meta]: any) => {
+                      readingCards.push({
+                        type: "local",
+                        url: filename,
+                        title: meta.title || filename,
+                        icon: "pdf",
+                      });
+                    }
+                  );
+                } else if (Array.isArray(event.data)) {
+                  readingCards = event.data;
+                }
+                parentTask.reading = readingCards;
+                setStructuredTimeline([...timeline]);
               }
+              break;
+            case "retrievalEnd":
+              parentTask = null;
+              setStructuredTimeline([...timeline]);
+              break;
+            case "webSearchStart":
+              parentTask = {
+                type: "webSearch",
+                label: event.data || "Searching the web",
+                searching: [],
+                reading: [],
+                collapsed: false,
+              };
+              timeline.push(parentTask);
+              setStructuredTimeline([...timeline]);
+              break;
+            case "webSearchQueries":
+              if (parentTask && parentTask.type === "webSearch") {
+                parentTask.searching = event.data || [];
+                setStructuredTimeline([...timeline]);
+              }
+              break;
+            case "webSearchSources":
+              if (parentTask && parentTask.type === "webSearch") {
+                parentTask.reading = event.data || [];
+                setStructuredTimeline([...timeline]);
+              }
+              break;
+            case "webSearchEnd":
+              parentTask = null;
+              setStructuredTimeline([...timeline]);
+              break;
+            case "sources":
+              console.log(
+                "[SOURCES EVENT] Received sources event:",
+                event.data
+              );
+              // Always treat first element as rag_sources, second as web_sources
+              let rag_sources = {},
+                web_sources = [];
+              if (Array.isArray(event.data)) {
+                rag_sources = event.data[0] || {};
+                web_sources = event.data[1] || [];
+              } else if (event.data && typeof event.data === "object") {
+                rag_sources = event.data.rag_sources || {};
+                web_sources = event.data.web_sources || [];
+              }
+              let cards: any[] = [];
+              // RAG sources first
+              Object.entries(rag_sources).forEach(([filename, meta]: any) => {
+                cards.push({
+                  type: "local",
+                  ref: refCounter++,
+                  url: filename,
+                  title: meta.title || filename,
+                  icon: "pdf",
+                });
+              });
+              // Web sources
+              (Array.isArray(web_sources)
+                ? web_sources
+                : Object.entries(web_sources)
+              ).forEach((src: any) => {
+                // src can be [url, meta] or an object
+                let url, meta;
+                if (Array.isArray(src)) {
+                  [url, meta] = src;
+                } else {
+                  url = src.url || src;
+                  meta = src;
+                }
+                cards.push({
+                  type: "web",
+                  ref: refCounter++,
+                  url,
+                  title: meta.title || url,
+                  domain: url
+                    ? url.match(/https?:\/\/(www\.)?([^\/]+)/)?.[2] || url
+                    : url,
+                  icon: "web",
+                });
+              });
+              setSourceCards(cards);
+              setStreamingSources(cards); // for compatibility
+              tempSources = cards;
+              latestSources = cards; // Always keep the latest sources
+              console.log("[SOURCES EVENT] Processed cards:", cards);
               break;
             case "taskEnd":
               setShowTimeline(false);
@@ -192,21 +320,22 @@ export default function ThreadPage() {
               messageId = event.messageId;
               break;
             case "messageEnd":
+              console.log(
+                "[MESSAGE END] latestSources before save:",
+                latestSources
+              );
               setIsStreaming(false);
               setShowTabs(true);
-              // Save the interaction for later POST
               setStreamingInteraction((prev: any) =>
                 prev
                   ? {
                       ...prev,
                       assistant_response: assistantResponse,
                       tasks: [...timeline],
-                      sources: [...sources],
+                      sources: [...latestSources],
                     }
                   : null
               );
-              setStreamingTasks([...timeline]);
-              setStreamingSources([...sources]);
               // POST the new interaction to /api/interactions
               (async () => {
                 try {
@@ -227,7 +356,7 @@ export default function ThreadPage() {
                       user_query: newInteraction.user_query,
                       assistant_response: assistantResponse,
                       tasks: [...timeline],
-                      sources: [...sources],
+                      sources: [...latestSources],
                     }),
                   });
                   setRefreshInteractions((prev) => prev + 1); // trigger re-fetch
@@ -235,6 +364,8 @@ export default function ThreadPage() {
                   console.error("Failed to save interaction", err);
                 }
               })();
+              break;
+            default:
               break;
           }
         }
@@ -277,7 +408,7 @@ export default function ThreadPage() {
             <StreamingInteraction
               userQuery={streamingInteraction?.user_query || userInput}
               showTimeline={showTimeline}
-              taskTimeline={taskTimeline}
+              taskTimeline={structuredTimeline}
               showSkeleton={showSkeleton}
               streamedAnswer={streamedAnswer}
             />
