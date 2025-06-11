@@ -23,8 +23,11 @@ export default function ChatWindow({ interactions }: ChatWindowProps) {
   return (
     <div className="w-full flex items-start flex-col">
       {interactions.map((interaction, idx) => (
-        <div key={interaction.id} className="mb-8 w-full">
-          <h2 className="font-bold text-2xl text-left mt-16 ml-4">
+        <div key={interaction.id} className="mb-4 w-full">
+          {idx > 0 && (
+            <div className="border-b border-gray-200 dark:border-neutral-700 mb-4" />
+          )}
+          <h2 className="font-bold text-2xl text-left mt-4 ml-4">
             {interaction.user_query}
           </h2>
           <div className="w-full px-4 mt-4">

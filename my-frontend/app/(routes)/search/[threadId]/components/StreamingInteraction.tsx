@@ -4,6 +4,22 @@ import { Search } from "lucide-react";
 import { AiFillFilePdf } from "react-icons/ai";
 import Sources from "./Sources";
 import ReactMarkdown from "react-markdown";
+import Timeline from "@mui/lab/Timeline";
+import TimelineItem from "@mui/lab/TimelineItem";
+import TimelineSeparator from "@mui/lab/TimelineSeparator";
+import TimelineConnector from "@mui/lab/TimelineConnector";
+import TimelineContent from "@mui/lab/TimelineContent";
+import TimelineDot from "@mui/lab/TimelineDot";
+import {
+  IconButton,
+  Collapse,
+  Chip,
+  Box,
+  Typography,
+  Stack,
+} from "@mui/material";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 
 interface StreamingInteractionProps {
   userQuery: string;
@@ -57,7 +73,7 @@ function renderWithCitations(text: string, sources: any[]) {
           href={source.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-block align-baseline mx-1 px-2 py-0.5 rounded bg-neutral-800 text-white text-xs font-bold"
+          className="inline-flex items-center justify-center w-5 h-5 mx-0.5 rounded bg-neutral-200 text-neutral-700 text-xs font-medium shadow-sm"
         >
           {refNum}
         </a>
@@ -106,117 +122,241 @@ export default function StreamingInteraction({
   };
 
   return (
-    <div className="mb-8 w-full">
-      <h2 className="font-bold text-2xl text-left mt-16 ml-4">{userQuery}</h2>
+    <div className="mb-4 w-full">
+      <h2 className="font-bold text-2xl text-left mt-4 ml-4">{userQuery}</h2>
       <div className="w-full px-4 mt-4">
         {showTimeline ? (
-          <div className="w-full my-8">
-            <div className="font-semibold mb-2"></div>
-            <ol className="border-l-2 border-yellow-400 pl-4">
-              {taskTimeline.map((task, idx) => (
-                <li key={idx} className="mb-4 relative">
-                  <div className="absolute -left-2 top-1 w-3 h-3 bg-yellow-400 rounded-full border-2 border-white" />
-                  {task.type === "retrieval" || task.type === "webSearch" ? (
-                    <div className="bg-white rounded shadow p-4">
-                      <div
-                        className="flex items-center justify-between cursor-pointer"
-                        onClick={() => toggleCollapse(idx)}
+          <Box
+            sx={{
+              width: "100%",
+              my: 8,
+              bgcolor: "background.default",
+              borderRadius: 2,
+              p: 2,
+              pl: 0,
+            }}
+          >
+            <Box sx={{ display: "flex", justifyContent: "flex-start" }}>
+              <Timeline
+                sx={{
+                  p: 0,
+                  m: 0,
+                  pl: 0,
+                  ml: 0,
+                  position: "static",
+                  minWidth: 0,
+                }}
+              >
+                {taskTimeline.map((task, idx) => {
+                  const isLast = idx === taskTimeline.length - 1;
+                  const subtasks =
+                    (Array.isArray(task.searching) &&
+                      task.searching.length > 0) ||
+                    (Array.isArray(task.reading) && task.reading.length > 0);
+                  return (
+                    <TimelineItem
+                      key={idx}
+                      sx={{
+                        minHeight: 48,
+                        pl: 0,
+                        ml: 0,
+                        "&:before": { display: "none" },
+                      }}
+                    >
+                      <TimelineSeparator>
+                        <TimelineDot color="primary" />
+                        {!isLast && <TimelineConnector />}
+                      </TimelineSeparator>
+                      <TimelineContent
+                        sx={{ py: 0, minWidth: 0, pl: 0, ml: 0 }}
                       >
-                        <div className="font-semibold mb-2">
-                          {task.type === "retrieval"
-                            ? "Searching local data"
-                            : "Searching the web"}
-                        </div>
-                        <button
-                          className="ml-2 text-xs text-gray-500"
-                          aria-label="Toggle collapse"
-                        >
-                          {collapsed[idx] ? "▶" : "▼"}
-                        </button>
-                      </div>
-                      {!collapsed[idx] && (
-                        <>
-                          <div className="mb-2">
-                            <span className="font-medium">Searching</span>
-                            <ul className="ml-4 mt-1">
-                              {Array.isArray(task.searching) &&
-                              task.searching.length > 0 ? (
-                                task.searching.map(
-                                  (query: string, i: number) => (
-                                    <li
-                                      key={i}
-                                      className="flex items-center gap-2 text-gray-700 text-sm mb-1"
+                        {task.type === "retrieval" ||
+                        task.type === "webSearch" ? (
+                          <Box>
+                            <Box display="flex" alignItems="center" mb={1}>
+                              <Typography
+                                variant="subtitle1"
+                                fontWeight={600}
+                                color="text.primary"
+                                sx={{ userSelect: "none" }}
+                              >
+                                {task.type === "retrieval"
+                                  ? "Searching local data"
+                                  : "Searching the web"}
+                              </Typography>
+                              <IconButton
+                                size="small"
+                                aria-label="Toggle collapse"
+                                sx={{ ml: 1 }}
+                                onClick={() => toggleCollapse(idx)}
+                              >
+                                {collapsed[idx] ? (
+                                  <ChevronRightIcon fontSize="small" />
+                                ) : (
+                                  <ExpandMoreIcon fontSize="small" />
+                                )}
+                              </IconButton>
+                            </Box>
+                            <Collapse in={!collapsed[idx]}>
+                              <Box mb={2} ml={2}>
+                                <Typography
+                                  variant="body2"
+                                  fontWeight={600}
+                                  color="text.secondary"
+                                >
+                                  Searching
+                                </Typography>
+                                <Stack
+                                  direction="column"
+                                  spacing={0.5}
+                                  mt={0.5}
+                                >
+                                  {Array.isArray(task.searching) &&
+                                  task.searching.length > 0 ? (
+                                    task.searching.map(
+                                      (query: string, i: number) => (
+                                        <Box
+                                          key={i}
+                                          display="flex"
+                                          alignItems="center"
+                                          gap={1}
+                                        >
+                                          <Search
+                                            className="w-4 h-4"
+                                            style={{ color: "#eab308" }}
+                                          />
+                                          <Chip
+                                            label={query}
+                                            size="small"
+                                            sx={{
+                                              bgcolor: "grey.100",
+                                              color: "text.primary",
+                                              fontFamily: "monospace",
+                                              fontSize: 13,
+                                              borderRadius: 2,
+                                            }}
+                                          />
+                                        </Box>
+                                      )
+                                    )
+                                  ) : (
+                                    <Typography
+                                      variant="body2"
+                                      color="text.disabled"
                                     >
-                                      <Search className="w-4 h-4 text-yellow-500" />
-                                      <span>{query}</span>
-                                    </li>
-                                  )
-                                )
-                              ) : (
-                                <li className="text-gray-400 text-sm">
-                                  No queries
-                                </li>
-                              )}
-                            </ul>
-                          </div>
-                          <div>
-                            <span className="font-medium">Reading</span>
-                            <div className="flex flex-wrap gap-2 ml-4 mt-2">
-                              {Array.isArray(task.reading) &&
-                              task.reading.length > 0 ? (
-                                task.reading.map((src: any, i: number) => (
-                                  <a
-                                    key={i}
-                                    href={
-                                      src.url && src.url.startsWith("http")
-                                        ? src.url
-                                        : undefined
-                                    }
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="flex items-center gap-2 px-3 py-1 bg-gray-100 rounded shadow text-sm hover:bg-blue-100 transition cursor-pointer"
-                                    title={src.title || src.url}
-                                  >
-                                    {getIcon(
-                                      src.type,
-                                      src.domain ||
+                                      No queries
+                                    </Typography>
+                                  )}
+                                </Stack>
+                              </Box>
+                              <Box ml={2} mb={1.5}>
+                                <Typography
+                                  variant="body2"
+                                  fontWeight={600}
+                                  color="text.secondary"
+                                >
+                                  Reading
+                                </Typography>
+                                <Stack
+                                  direction="row"
+                                  spacing={1}
+                                  flexWrap="wrap"
+                                  mt={1}
+                                >
+                                  {Array.isArray(task.reading) &&
+                                  task.reading.length > 0 ? (
+                                    task.reading.map((src: any, i: number) => {
+                                      const domain =
+                                        src.domain ||
                                         (src.url &&
                                           src.url.match(
                                             /https?:\/\/(www\.)?([^\/]+)/
-                                          )?.[2])
-                                    )}
-                                    <span className="font-semibold">
-                                      {src.type === "local"
-                                        ? src.url.split("/").pop()
-                                        : src.domain ||
-                                          (src.url &&
-                                            src.url.match(
-                                              /https?:\/\/(www\.)?([^\/]+)/
-                                            )?.[2])}
-                                    </span>
-                                  </a>
-                                ))
-                              ) : (
-                                <span className="text-gray-400 text-sm">
-                                  No sources
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="ml-4 text-sm text-gray-700">
-                      {typeof task.label === "string"
-                        ? task.label
-                        : JSON.stringify(task.label)}
-                    </div>
-                  )}
-                </li>
-              ))}
-            </ol>
-          </div>
+                                          )?.[2]);
+                                      const filename =
+                                        src.type === "local"
+                                          ? src.url.split("/").pop()
+                                          : undefined;
+                                      return (
+                                        <Box
+                                          key={i}
+                                          component="span"
+                                          sx={{ mb: 1 }}
+                                        >
+                                          <Chip
+                                            component={
+                                              src.url &&
+                                              src.url.startsWith("http")
+                                                ? "a"
+                                                : "span"
+                                            }
+                                            href={
+                                              src.url &&
+                                              src.url.startsWith("http")
+                                                ? src.url
+                                                : undefined
+                                            }
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            clickable={
+                                              !!(
+                                                src.url &&
+                                                src.url.startsWith("http")
+                                              )
+                                            }
+                                            icon={getIcon(src.type, domain)}
+                                            label={
+                                              src.type === "local"
+                                                ? filename
+                                                : domain
+                                            }
+                                            title={src.title || src.url}
+                                            sx={{
+                                              bgcolor: "grey.100",
+                                              color: "text.primary",
+                                              fontWeight: 600,
+                                              fontSize: 13,
+                                              borderRadius: 2,
+                                              maxWidth: 140,
+                                              minWidth: 80,
+                                              textOverflow: "ellipsis",
+                                              overflow: "hidden",
+                                            }}
+                                          />
+                                        </Box>
+                                      );
+                                    })
+                                  ) : (
+                                    <Typography
+                                      variant="body2"
+                                      color="text.disabled"
+                                    >
+                                      No sources
+                                    </Typography>
+                                  )}
+                                </Stack>
+                              </Box>
+                            </Collapse>
+                          </Box>
+                        ) : (
+                          <Box ml={2}>
+                            <Typography
+                              variant="subtitle1"
+                              fontWeight={600}
+                              color="text.primary"
+                            >
+                              {typeof task.label === "string"
+                                ? task.label
+                                : JSON.stringify(task.label)}
+                            </Typography>
+                          </Box>
+                        )}
+                      </TimelineContent>
+                    </TimelineItem>
+                  );
+                })}
+              </Timeline>
+            </Box>
+          </Box>
         ) : showSkeleton ? (
           <div className="w-full my-8">
             <div className="mb-2 font-semibold">Preparing answer...</div>

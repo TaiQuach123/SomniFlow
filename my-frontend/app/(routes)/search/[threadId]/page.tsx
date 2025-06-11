@@ -5,6 +5,9 @@ import Header from "./components/Header";
 import ChatWindow from "./components/ChatWindow";
 import { Skeleton } from "@/components/ui/skeleton";
 import StreamingInteraction from "./components/StreamingInteraction";
+import { Globe, Paperclip, AudioLines, SearchCheck, Atom } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
 
 export default function ThreadPage() {
   const params = useParams();
@@ -400,12 +403,11 @@ export default function ThreadPage() {
   );
 
   return (
-    <div className="flex flex-col items-center min-h-screen relative w-full">
+    <div className="flex flex-col min-h-screen relative w-full">
       <Header avatarUrl={avatarUrl} userMessageTime={userMessageTime} />
-      <div className="w-full max-w-4xl mx-auto mt px-4">
-        {/* Scrollable chat area */}
-        <div ref={chatAreaRef} className="h-[70vh] overflow-y-auto pr-2">
-          {/* Always show previous chat, append streaming interaction if present */}
+      {/* Scrollable chat area now full width, content centered */}
+      <div ref={chatAreaRef} className="h-[75vh] overflow-y-auto w-full">
+        <div className="w-full max-w-4xl mx-auto px-4">
           <ChatWindow interactions={dedupedInteractions} />
           {isStreaming && (
             <StreamingInteraction
@@ -418,23 +420,64 @@ export default function ThreadPage() {
             />
           )}
         </div>
-        <form onSubmit={handleSend} className="flex gap-2 mt-8 w-full">
-          <input
-            ref={inputRef}
-            type="text"
-            className="flex-1 border rounded px-3 py-2"
-            placeholder="Type your message..."
-            value={userInput}
-            onChange={(e) => setUserInput(e.target.value)}
-            disabled={isStreaming}
-          />
-          <button
-            type="submit"
-            className="bg-blue-500 text-white px-4 py-2 rounded"
-            disabled={isStreaming || !userInput.trim()}
-          >
-            {isStreaming ? "Sending..." : "Send"}
-          </button>
+      </div>
+      <div className="w-full max-w-4xl mx-auto px-4">
+        <form onSubmit={handleSend} className="w-full mt-8">
+          <div className="flex items-center justify-between w-full max-w-4xl border rounded-2xl bg-white dark:bg-neutral-900 p-2 mx-auto">
+            <Tabs
+              defaultValue={"Search"}
+              className="w-[180px] mr-4"
+              onValueChange={() => {}}
+            >
+              <TabsList className="bg-transparent border-none shadow-none p-0">
+                <TabsTrigger
+                  value="Search"
+                  className="text-primary flex items-center gap-1 px-3 py-2 rounded-md data-[state=active]:bg-blue-100 dark:data-[state=active]:bg-neutral-800"
+                >
+                  <SearchCheck className="h-4 w-4" /> Search
+                </TabsTrigger>
+                <TabsTrigger
+                  value="Research"
+                  className="text-primary flex items-center gap-1 px-3 py-2 rounded-md data-[state=active]:bg-blue-100 dark:data-[state=active]:bg-neutral-800"
+                >
+                  <Atom className="h-4 w-4" /> Research
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+            <div className="flex-1 flex items-center px-2">
+              <div
+                className="w-full cursor-text"
+                onClick={() => inputRef.current && inputRef.current.focus()}
+              >
+                <input
+                  ref={inputRef}
+                  type="text"
+                  className="w-full bg-transparent outline-none py-2 text-base placeholder:text-gray-500"
+                  placeholder="Type your message..."
+                  value={userInput}
+                  onChange={(e) => setUserInput(e.target.value)}
+                  disabled={isStreaming}
+                  style={{ minWidth: 0 }}
+                />
+              </div>
+            </div>
+            <div className="flex gap-2 items-center ml-2">
+              <Button type="button" variant="ghost" size="icon" tabIndex={-1}>
+                <Globe className="text-gray-600 h-5 w-5" />
+              </Button>
+              <Button type="button" variant="ghost" size="icon" tabIndex={-1}>
+                <Paperclip className="text-gray-500 h-5 w-5" />
+              </Button>
+              <Button
+                type="submit"
+                size="icon"
+                className="bg-blue-500 hover:bg-blue-600 text-white"
+                disabled={isStreaming || !userInput.trim()}
+              >
+                <AudioLines className="h-5 w-5" />
+              </Button>
+            </div>
+          </div>
         </form>
       </div>
     </div>

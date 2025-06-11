@@ -26,7 +26,7 @@ function renderWithCitations(text: string, sources: Source[]) {
           href={source.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-block align-baseline mx-1 px-2 py-0.5 rounded bg-neutral-800 text-white text-xs font-bold"
+          className="inline-flex items-center justify-center w-5 h-5 mx-0.5 rounded bg-neutral-200 text-neutral-700 text-xs font-medium shadow-sm"
         >
           {refNum}
         </a>
@@ -67,7 +67,7 @@ export default function Answer({
   sources?: Source[];
 }) {
   return (
-    <div className="bg-white dark:bg-neutral-900 rounded">
+    <div className="bg-white dark:bg-neutral-900 rounded pb-8">
       <ReactMarkdown
         components={{
           p: makeCitationRenderer("p", sources),

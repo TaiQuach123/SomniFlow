@@ -15,14 +15,14 @@ interface HeaderProps {
 
 export default function Header({ avatarUrl, userMessageTime }: HeaderProps) {
   return (
-    <div className="absolute top-2 left-2 right-2 flex flex-col gap-0">
-      <div className="flex items-center gap-2">
-        <Avatar>
+    <div className="sticky top-0 z-40 w-full bg-white dark:bg-neutral-900 flex flex-col gap-0 px-4 py-0">
+      <div className="flex items-center gap-2 h-12 min-h-0 py-0">
+        <Avatar className="w-8 h-8">
           <AvatarImage src={avatarUrl} alt="User avatar" />
           <AvatarFallback>U</AvatarFallback>
         </Avatar>
         <Clock className="text-gray-500" size={18} />
-        <span className="text-gray-500 text-sm">
+        <span className="text-gray-500 text-sm leading-none">
           {userMessageTime ? timeAgo(userMessageTime) : ""}
         </span>
         <DropdownMenu>
@@ -42,7 +42,7 @@ export default function Header({ avatarUrl, userMessageTime }: HeaderProps) {
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-      <hr className="mt-4 border-t border-gray-200 w-full" />
+      <hr className="mt-2 border-t border-gray-200 w-full" />
     </div>
   );
 }
