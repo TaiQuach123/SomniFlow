@@ -181,7 +181,7 @@ export default function ThreadPage() {
             case "retrievalStart":
               parentTask = {
                 type: "retrieval",
-                label: event.data || "Searching local data",
+                label: event.data || "Searching local storage",
                 searching: [],
                 reading: [],
                 collapsed: false,
@@ -210,12 +210,16 @@ export default function ThreadPage() {
                         type: "local",
                         url: filename,
                         title: meta.title || filename,
+                        description: meta.description || undefined,
                         icon: "pdf",
                       });
                     }
                   );
                 } else if (Array.isArray(event.data)) {
-                  readingCards = event.data;
+                  readingCards = event.data.map((src: any) => ({
+                    ...src,
+                    description: src.description || undefined,
+                  }));
                 }
                 parentTask.reading = readingCards;
                 setStructuredTimeline([...timeline]);
@@ -247,6 +251,7 @@ export default function ThreadPage() {
                 parentTask.reading = (event.data || []).map((src: any) => ({
                   type: "web",
                   ...src,
+                  description: src.description || undefined,
                 }));
                 setStructuredTimeline([...timeline]);
               }
@@ -278,6 +283,7 @@ export default function ThreadPage() {
                   ref: refCounter++,
                   url: filename,
                   title: meta.title || filename,
+                  description: meta.description || undefined,
                   icon: "pdf",
                 });
               });
@@ -299,6 +305,7 @@ export default function ThreadPage() {
                   ref: refCounter++,
                   url,
                   title: meta.title || url,
+                  description: meta.description || undefined,
                   domain: url
                     ? url.match(/https?:\/\/(www\.)?([^\/]+)/)?.[2] || url
                     : url,

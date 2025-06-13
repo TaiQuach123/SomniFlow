@@ -81,24 +81,47 @@ export default function Tasks({ tasks }: { tasks: any[] }) {
                 }}
               >
                 <TimelineSeparator>
-                  <TimelineDot color="primary" />
-                  {!isLast && <TimelineConnector />}
+                  <TimelineDot
+                    color="grey"
+                    sx={{
+                      width: 8,
+                      height: 8,
+                      minWidth: 8,
+                      minHeight: 8,
+                      boxShadow: "none",
+                      padding: 0,
+                      borderWidth: 1,
+                      boxSizing: "border-box",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  />
+                  {!isLast && <TimelineConnector sx={{ width: 1.5 }} />}
                 </TimelineSeparator>
-                <TimelineContent sx={{ py: 0, minWidth: 0, pl: 0, ml: 0 }}>
+                <TimelineContent sx={{ py: 0, minWidth: 0, pl: 0, ml: 2 }}>
                   <Box
                     display="flex"
                     alignItems="center"
                     mb={subtasks ? 0.5 : 0}
                     mt={0.5}
+                    sx={
+                      task.type === "retrieval" || task.type === "webSearch"
+                        ? { mt: "-0px" }
+                        : {}
+                    }
                   >
                     <Typography
                       variant="subtitle1"
-                      fontWeight={600}
-                      color="text.primary"
-                      sx={{ userSelect: "none" }}
+                      sx={{
+                        userSelect: "none",
+                        fontSize: 14,
+                        fontWeight: 500,
+                        color: "#374151",
+                      }}
                     >
                       {task.type === "retrieval"
-                        ? "Searching local data"
+                        ? "Searching local storage"
                         : task.type === "webSearch"
                         ? "Searching the web"
                         : typeof task.label === "string"
@@ -126,8 +149,11 @@ export default function Tasks({ tasks }: { tasks: any[] }) {
                       <Box mb={1} ml={2}>
                         <Typography
                           variant="body2"
-                          fontWeight={600}
-                          color="text.secondary"
+                          sx={{
+                            fontSize: 12,
+                            fontWeight: 500,
+                            color: "#374151",
+                          }}
                         >
                           Searching
                         </Typography>
@@ -141,25 +167,35 @@ export default function Tasks({ tasks }: { tasks: any[] }) {
                                 alignItems="center"
                                 gap={1}
                               >
-                                <Search
-                                  className="w-4 h-4"
-                                  style={{ color: "#eab308" }}
-                                />
                                 <Chip
+                                  icon={
+                                    <Search
+                                      className="w-4 h-4"
+                                      style={{ color: "#1a1a1a" }}
+                                    />
+                                  }
                                   label={query}
                                   size="small"
                                   sx={{
                                     bgcolor: "grey.100",
                                     color: "text.primary",
                                     fontFamily: "monospace",
-                                    fontSize: 13,
+                                    fontSize: 12,
                                     borderRadius: 2,
+                                    height: 24,
                                   }}
                                 />
                               </Box>
                             ))
                           ) : (
-                            <Typography variant="body2" color="text.disabled">
+                            <Typography
+                              variant="body2"
+                              sx={{
+                                fontSize: 12,
+                                fontWeight: 500,
+                                color: "#374151",
+                              }}
+                            >
                               No queries
                             </Typography>
                           )}
@@ -169,8 +205,11 @@ export default function Tasks({ tasks }: { tasks: any[] }) {
                       <Box ml={2} mb={1.5}>
                         <Typography
                           variant="body2"
-                          fontWeight={600}
-                          color="text.secondary"
+                          sx={{
+                            fontSize: 12,
+                            fontWeight: 500,
+                            color: "#374151",
+                          }}
                         >
                           Reading
                         </Typography>
@@ -220,19 +259,27 @@ export default function Tasks({ tasks }: { tasks: any[] }) {
                                       bgcolor: "grey.100",
                                       color: "text.primary",
                                       fontWeight: 600,
-                                      fontSize: 13,
+                                      fontSize: 12,
                                       borderRadius: 2,
                                       maxWidth: 140,
                                       minWidth: 80,
                                       textOverflow: "ellipsis",
                                       overflow: "hidden",
+                                      height: 24,
                                     }}
                                   />
                                 </Box>
                               );
                             })
                           ) : (
-                            <Typography variant="body2" color="text.disabled">
+                            <Typography
+                              variant="body2"
+                              sx={{
+                                fontSize: 12,
+                                fontWeight: 500,
+                                color: "#374151",
+                              }}
+                            >
                               No sources
                             </Typography>
                           )}

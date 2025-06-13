@@ -10,7 +10,8 @@ def get_rag_sources(rag_results: List[QueryResponse], source_map: dict = {}) -> 
             source = point.payload["metadata"]["source"]
             if source not in source_map:
                 source_map[source] = {
-                    "title": point.payload["metadata"]["title"],
+                    "title": point.payload["metadata"].get("title", ""),
+                    "description": point.payload["metadata"].get("description", ""),
                     "chunks": [],
                 }
             if point.payload["content"] not in source_map[source]["chunks"]:

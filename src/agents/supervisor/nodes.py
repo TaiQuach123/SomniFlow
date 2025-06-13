@@ -65,7 +65,7 @@ async def supervisor_node(
         json.dumps(
             {
                 "type": "step",
-                "data": "Supervisor: Planning",
+                "data": "Planning...",
                 "messageId": state["messageId"],
             }
         )

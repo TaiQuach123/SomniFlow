@@ -149,7 +149,7 @@ async def retriever(
         json.dumps(
             {
                 "type": "step",
-                "data": "RAG Evaluation",
+                "data": "Local Storage Evaluation",
                 "messageId": state["messageId"],
             }
         )
@@ -270,7 +270,7 @@ async def context_processor_node(
 ) -> Command[Literal["task_handler_node", END]]:
     logger.info("Suggestion Context Processor Node")
     writer = get_stream_writer()
-    writer(json.dumps({"type": "step", "data": "Context Processor"}) + "\n")
+    writer(json.dumps({"type": "step", "data": "Context Processing"}) + "\n")
     extractor_agent = create_suggestion_extractor_agent()
     extractor_result = await extractor_agent.run(
         "",

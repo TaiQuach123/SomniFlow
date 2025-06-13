@@ -113,23 +113,17 @@ export function AppSidebar() {
       path: "/discover",
     },
     // Library will be handled separately
-    // Only show Sign In if not authenticated
-    ...(!user && !loading
-      ? [
-          {
-            title: "Sign In",
-            icon: LogIn,
-            path: "/login",
-          },
-        ]
-      : []),
+    // Sign In will be rendered below Library
   ];
   return (
-    <Sidebar>
-      <SidebarHeader className="bg-accent flex items-center py-5">
-        <Image src="/logo2.png" alt="logo" width={100} height={50} />
+    <Sidebar className="bg-gray-100 text-gray-900">
+      <SidebarHeader className="!flex-row items-center w-full gap-3 py-5 bg-gray-100">
+        <Image src="/logo.svg" alt="logo" width={56} height={56} />
+        <span className="text-2xl font-bold tracking-tight text-gray-900 flex items-center h-[56px]">
+          SomniFlow
+        </span>
       </SidebarHeader>
-      <SidebarContent className="bg-accent">
+      <SidebarContent className="bg-gray-100">
         {/* <SidebarGroupLabel>Menu</SidebarGroupLabel> */}
         <SidebarGroup>
           <SidebarContent>
@@ -157,22 +151,45 @@ export function AppSidebar() {
               {/* Library collapsible menu item */}
               <SidebarMenuItem>
                 <div className="flex flex-col w-full">
-                  <button
-                    className={`flex items-center w-full p-5 py-3 hover:bg-gray-200 dark:hover:bg-gray-700 hover:font-bold transition-transform duration-150 hover:scale-105 hover:shadow-md font-bold focus:outline-none text-base`}
-                    onClick={user ? () => setLibraryOpen((v) => !v) : undefined}
-                    aria-expanded={user ? libraryOpen : undefined}
+                  <div
+                    className="flex items-center w-full p-5 py-3 hover:bg-gray-200 dark:hover:bg-gray-700 hover:font-bold transition-transform duration-150 hover:scale-105 hover:shadow-md font-bold focus:outline-none text-base"
                     style={{ minHeight: 56 }}
-                    disabled={!user}
                   >
-                    <GalleryHorizontalEnd className="h-8 w-8 mr-2" />
-                    <span className="flex-1 text-left">Library</span>
-                    {user &&
-                      (libraryOpen ? (
-                        <ChevronDown className="h-5 w-5 ml-2" />
-                      ) : (
-                        <ChevronRight className="h-5 w-5 ml-2" />
-                      ))}
-                  </button>
+                    <Link
+                      href="/library"
+                      className="flex items-center flex-1 min-w-0"
+                      tabIndex={user ? 0 : -1}
+                      aria-disabled={!user}
+                      style={{
+                        pointerEvents: user ? "auto" : "none",
+                        opacity: user ? 1 : 0.5,
+                      }}
+                    >
+                      <GalleryHorizontalEnd className="h-8 w-8 mr-2" />
+                      <span className="text-left">Library</span>
+                    </Link>
+                    {user && (
+                      <button
+                        type="button"
+                        className="ml-2 p-1 rounded hover:bg-gray-300 dark:hover:bg-gray-800"
+                        aria-label={
+                          libraryOpen ? "Collapse sessions" : "Expand sessions"
+                        }
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setLibraryOpen((v) => !v);
+                        }}
+                        tabIndex={0}
+                      >
+                        {libraryOpen ? (
+                          <ChevronDown className="h-5 w-5" />
+                        ) : (
+                          <ChevronRight className="h-5 w-5" />
+                        )}
+                      </button>
+                    )}
+                  </div>
                   {user && libraryOpen && (
                     <SidebarMenuSub
                       className="mt-1 !border-l-0"
@@ -253,6 +270,22 @@ export function AppSidebar() {
                   )}
                 </div>
               </SidebarMenuItem>
+              {/* Move Sign In below Library */}
+              {!user && !loading && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    asChild
+                    className={`p-5 py-6 hover:bg-gray-200 dark:hover:bg-gray-700 hover:font-bold transition-transform duration-150 hover:scale-105 hover:shadow-md ${
+                      path === "/login" ? "font-bold" : ""
+                    }`}
+                  >
+                    <Link href="/login">
+                      <LogIn className="h-8 w-8" />
+                      <span className="text-lg">Sign In</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
             </SidebarMenu>
             {/* Only show Sign Up if not authenticated */}
             {!user && !loading && (
@@ -264,7 +297,7 @@ export function AppSidebar() {
         </SidebarGroup>
         <SidebarGroup />
       </SidebarContent>
-      <SidebarFooter className="bg-accent">
+      <SidebarFooter className="bg-gray-100">
         <div className="flex items-center gap-4 justify-between w-full">
           <Avatar className="transition-all duration-200 group hover:scale-105 hover:shadow-lg hover:border-2 hover:border-gray-300 hover:bg-gray-200 dark:hover:border-gray-700 dark:hover:bg-gray-700 hover:ring-2 hover:ring-gray-300 dark:hover:ring-gray-700">
             <AvatarImage

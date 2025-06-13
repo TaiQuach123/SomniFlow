@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Body
 from fastapi.responses import StreamingResponse
 from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 from backend.database import get_async_session
 from backend.auth.dependencies import get_current_user_id
 from backend.api.service import APIService
@@ -48,16 +49,16 @@ async def get_interactions(
     return await api_service.get_interactions(session, thread_id)
 
 
-@router.get("/chats/{thread_id}", response_model=ConversationHistory)
-async def get_chat_history(
-    thread_id: UUID, checkpointer: AsyncPostgresSaver = Depends(get_checkpointer)
-):
-    messages, created_at = await api_service.get_chat_history_from_checkpointer(
-        str(thread_id), checkpointer
-    )
-    return ConversationHistory(
-        messages=messages,
-    )
+# @router.get("/chats/{thread_id}", response_model=ConversationHistory)
+# async def get_chat_history(
+#     thread_id: UUID, checkpointer: AsyncPostgresSaver = Depends(get_checkpointer)
+# ):
+#     messages, created_at = await api_service.get_chat_history_from_checkpointer(
+#         str(thread_id), checkpointer
+#     )
+#     return ConversationHistory(
+#         messages=messages,
+#     )
 
 
 @router.post("/chat")
@@ -107,3 +108,17 @@ async def create_interaction_endpoint(
         assistant_response=data.assistant_response,
     )
     return {"status": "success", "interaction_id": str(interaction.id)}
+
+
+@router.delete("/chats/{thread_id}")
+async def delete_chat(
+    thread_id: str,
+    user_id: UUID = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_async_session),
+):
+    # Check if the thread exists and belongs to the user
+    # Use the service method for deletion
+    deleted = await api_service.delete_thread(session, thread_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Thread not found")
+    return {"status": "success", "message": f"Thread {thread_id} deleted"}

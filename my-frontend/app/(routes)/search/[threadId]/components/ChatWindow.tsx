@@ -46,6 +46,10 @@ export default function ChatWindow({ interactions }: ChatWindowProps) {
                 >
                   <Database className="w-4 h-4" />
                   Sources
+                  <span className="mx-0 text-gray-400">&middot;</span>
+                  <span className="inline-flex items-center justify-center px-1 py-0.5 text-xs font-medium rounded-full bg-gray-200 text-gray-700 min-w-[20px] h-5">
+                    {interaction.sources ? interaction.sources.length : 0}
+                  </span>
                 </TabsTrigger>
                 <TabsTrigger
                   value="Tasks"
@@ -56,14 +60,20 @@ export default function ChatWindow({ interactions }: ChatWindowProps) {
                 </TabsTrigger>
               </TabsList>
               <TabsContent value="Answer">
-                <Sources sources={interaction.sources || []} />
+                <Sources
+                  sources={interaction.sources || []}
+                  variant="horizontal"
+                />
                 <Answer
                   data={interaction.assistant_response}
                   sources={interaction.sources || []}
                 />
               </TabsContent>
               <TabsContent value="Sources">
-                <Sources sources={interaction.sources || []} />
+                <Sources
+                  sources={interaction.sources || []}
+                  variant="vertical"
+                />
               </TabsContent>
               <TabsContent value="Tasks">
                 <Tasks tasks={interaction.tasks || []} />

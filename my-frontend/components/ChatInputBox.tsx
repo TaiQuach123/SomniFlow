@@ -42,6 +42,13 @@ export default function ChatInputBox() {
 
   return (
     <div className="flex flex-col h-screen items-center justify-center w-full">
+      <img
+        src="/logo-gray.svg"
+        alt="Logo"
+        width={160}
+        height={160}
+        className="mb-8 grayscale brightness-110 mx-auto"
+      />
       <h1 className="inline-flex min-h-10.5 items-baseline text-[28px] leading-[34px] font-normal tracking-[0.38px] whitespace-pre-wrap motion-safe:[transition:0.25s_transform_var(--spring-standard),0.2s_opacity_var(--spring-standard),0.3s_visibility_var(--spring-standard)] opacity-100">
         <div className="px-1 text-pretty whitespace-pre-wrap">
           💬 Ask me anything about insomnia — I&apos;m here to help!

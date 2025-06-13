@@ -31,7 +31,6 @@ interface StreamingInteractionProps {
 }
 
 function getIcon(type: string, domain?: string) {
-  console.log(type, domain);
   if (type === "local")
     return <AiFillFilePdf className="text-red-600 w-5 h-5" />;
   if (type === "web" && domain) {
@@ -39,8 +38,8 @@ function getIcon(type: string, domain?: string) {
       <img
         src={`https://icon.horse/icon/${domain}`}
         alt={domain}
-        className="w-5 h-5 rounded"
-        style={{ background: "#fff" }}
+        className="w-5 h-5 rounded-full bg-white"
+        style={{ minWidth: 20, minHeight: 20 }}
         onError={(e) => {
           (e.target as HTMLImageElement).src = "/favicon.ico";
         }}
@@ -51,6 +50,13 @@ function getIcon(type: string, domain?: string) {
     <span role="img" aria-label="file">
       📁
     </span>
+  );
+}
+
+function hasSubtasks(task: any) {
+  return (
+    (Array.isArray(task.searching) && task.searching.length > 0) ||
+    (Array.isArray(task.reading) && task.reading.length > 0)
   );
 }
 
@@ -128,12 +134,11 @@ export default function StreamingInteraction({
         {showTimeline ? (
           <Box
             sx={{
-              width: "100%",
-              my: 8,
               bgcolor: "background.default",
               borderRadius: 2,
               p: 2,
               pl: 0,
+              my: 8,
             }}
           >
             <Box sx={{ display: "flex", justifyContent: "flex-start" }}>
@@ -149,10 +154,7 @@ export default function StreamingInteraction({
               >
                 {taskTimeline.map((task, idx) => {
                   const isLast = idx === taskTimeline.length - 1;
-                  const subtasks =
-                    (Array.isArray(task.searching) &&
-                      task.searching.length > 0) ||
-                    (Array.isArray(task.reading) && task.reading.length > 0);
+                  const subtasks = hasSubtasks(task);
                   return (
                     <TimelineItem
                       key={idx}
@@ -164,192 +166,228 @@ export default function StreamingInteraction({
                       }}
                     >
                       <TimelineSeparator>
-                        <TimelineDot color="primary" />
-                        {!isLast && <TimelineConnector />}
+                        <TimelineDot
+                          color="grey"
+                          sx={{
+                            width: 8,
+                            height: 8,
+                            minWidth: 8,
+                            minHeight: 8,
+                            boxShadow: "none",
+                            padding: 0,
+                            borderWidth: 1,
+                            boxSizing: "border-box",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                          }}
+                        />
+                        {!isLast && <TimelineConnector sx={{ width: 1.5 }} />}
                       </TimelineSeparator>
                       <TimelineContent
-                        sx={{ py: 0, minWidth: 0, pl: 0, ml: 0 }}
+                        sx={{ py: 0, minWidth: 0, pl: 0, ml: 2 }}
                       >
-                        {task.type === "retrieval" ||
-                        task.type === "webSearch" ? (
-                          <Box>
-                            <Box display="flex" alignItems="center" mb={1}>
-                              <Typography
-                                variant="subtitle1"
-                                fontWeight={600}
-                                color="text.primary"
-                                sx={{ userSelect: "none" }}
-                              >
-                                {task.type === "retrieval"
-                                  ? "Searching local data"
-                                  : "Searching the web"}
-                              </Typography>
-                              <IconButton
-                                size="small"
-                                aria-label="Toggle collapse"
-                                sx={{ ml: 1 }}
-                                onClick={() => toggleCollapse(idx)}
-                              >
-                                {collapsed[idx] ? (
-                                  <ChevronRightIcon fontSize="small" />
-                                ) : (
-                                  <ExpandMoreIcon fontSize="small" />
-                                )}
-                              </IconButton>
-                            </Box>
-                            <Collapse in={!collapsed[idx]}>
-                              <Box mb={2} ml={2}>
-                                <Typography
-                                  variant="body2"
-                                  fontWeight={600}
-                                  color="text.secondary"
-                                >
-                                  Searching
-                                </Typography>
-                                <Stack
-                                  direction="column"
-                                  spacing={0.5}
-                                  mt={0.5}
-                                >
-                                  {Array.isArray(task.searching) &&
-                                  task.searching.length > 0 ? (
-                                    task.searching.map(
-                                      (query: string, i: number) => (
-                                        <Box
-                                          key={i}
-                                          display="flex"
-                                          alignItems="center"
-                                          gap={1}
-                                        >
-                                          <Search
-                                            className="w-4 h-4"
-                                            style={{ color: "#eab308" }}
-                                          />
-                                          <Chip
-                                            label={query}
-                                            size="small"
-                                            sx={{
-                                              bgcolor: "grey.100",
-                                              color: "text.primary",
-                                              fontFamily: "monospace",
-                                              fontSize: 13,
-                                              borderRadius: 2,
-                                            }}
-                                          />
-                                        </Box>
-                                      )
-                                    )
-                                  ) : (
-                                    <Typography
-                                      variant="body2"
-                                      color="text.disabled"
-                                    >
-                                      No queries
-                                    </Typography>
-                                  )}
-                                </Stack>
-                              </Box>
-                              <Box ml={2} mb={1.5}>
-                                <Typography
-                                  variant="body2"
-                                  fontWeight={600}
-                                  color="text.secondary"
-                                >
-                                  Reading
-                                </Typography>
-                                <Stack
-                                  direction="row"
-                                  spacing={1}
-                                  flexWrap="wrap"
-                                  mt={1}
-                                >
-                                  {Array.isArray(task.reading) &&
-                                  task.reading.length > 0 ? (
-                                    task.reading.map((src: any, i: number) => {
-                                      const domain =
-                                        src.domain ||
-                                        (src.url &&
-                                          src.url.match(
-                                            /https?:\/\/(www\.)?([^\/]+)/
-                                          )?.[2]);
-                                      const filename =
-                                        src.type === "local"
-                                          ? src.url.split("/").pop()
-                                          : undefined;
-                                      return (
-                                        <Box
-                                          key={i}
-                                          component="span"
-                                          sx={{ mb: 1 }}
-                                        >
-                                          <Chip
-                                            component={
-                                              src.url &&
-                                              src.url.startsWith("http")
-                                                ? "a"
-                                                : "span"
-                                            }
-                                            href={
-                                              src.url &&
-                                              src.url.startsWith("http")
-                                                ? src.url
-                                                : undefined
-                                            }
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            clickable={
-                                              !!(
-                                                src.url &&
-                                                src.url.startsWith("http")
-                                              )
-                                            }
-                                            icon={getIcon(src.type, domain)}
-                                            label={
-                                              src.type === "local"
-                                                ? filename
-                                                : domain
-                                            }
-                                            title={src.title || src.url}
-                                            sx={{
-                                              bgcolor: "grey.100",
-                                              color: "text.primary",
-                                              fontWeight: 600,
-                                              fontSize: 13,
-                                              borderRadius: 2,
-                                              maxWidth: 140,
-                                              minWidth: 80,
-                                              textOverflow: "ellipsis",
-                                              overflow: "hidden",
-                                            }}
-                                          />
-                                        </Box>
-                                      );
-                                    })
-                                  ) : (
-                                    <Typography
-                                      variant="body2"
-                                      color="text.disabled"
-                                    >
-                                      No sources
-                                    </Typography>
-                                  )}
-                                </Stack>
-                              </Box>
-                            </Collapse>
-                          </Box>
-                        ) : (
-                          <Box ml={2}>
-                            <Typography
-                              variant="subtitle1"
-                              fontWeight={600}
-                              color="text.primary"
+                        <Box
+                          display="flex"
+                          alignItems="center"
+                          mb={subtasks ? 0.5 : 0}
+                          mt={0.5}
+                          sx={
+                            task.type === "retrieval" ||
+                            task.type === "webSearch"
+                              ? { mt: "-0px" }
+                              : {}
+                          }
+                        >
+                          <Typography
+                            variant="subtitle1"
+                            sx={{
+                              userSelect: "none",
+                              fontSize: 14,
+                              fontWeight: 500,
+                              color: "#374151",
+                            }}
+                          >
+                            {task.type === "retrieval"
+                              ? "Searching local storage"
+                              : task.type === "webSearch"
+                              ? "Searching the web"
+                              : typeof task.label === "string"
+                              ? task.label
+                              : JSON.stringify(task.label)}
+                          </Typography>
+                          {subtasks && (
+                            <IconButton
+                              size="small"
+                              aria-label="Toggle collapse"
+                              onClick={() => toggleCollapse(idx)}
+                              sx={{ ml: 1 }}
                             >
-                              {typeof task.label === "string"
-                                ? task.label
-                                : JSON.stringify(task.label)}
-                            </Typography>
-                          </Box>
-                        )}
+                              {collapsed[idx] ? (
+                                <ChevronRightIcon fontSize="small" />
+                              ) : (
+                                <ExpandMoreIcon fontSize="small" />
+                              )}
+                            </IconButton>
+                          )}
+                        </Box>
+                        {subtasks ? (
+                          <Collapse in={!collapsed[idx]}>
+                            {/* Searching */}
+                            <Box mb={1} ml={2}>
+                              <Typography
+                                variant="body2"
+                                sx={{
+                                  fontSize: 12,
+                                  fontWeight: 500,
+                                  color: "#374151",
+                                }}
+                              >
+                                Searching
+                              </Typography>
+                              <Stack direction="column" spacing={0.5} mt={0.5}>
+                                {Array.isArray(task.searching) &&
+                                task.searching.length > 0 ? (
+                                  task.searching.map(
+                                    (query: string, i: number) => (
+                                      <Box
+                                        key={i}
+                                        display="flex"
+                                        alignItems="center"
+                                        gap={1}
+                                      >
+                                        <Chip
+                                          icon={
+                                            <Search
+                                              className="w-4 h-4"
+                                              style={{ color: "#1a1a1a" }}
+                                            />
+                                          }
+                                          label={query}
+                                          size="small"
+                                          sx={{
+                                            bgcolor: "grey.100",
+                                            color: "text.primary",
+                                            fontFamily: "monospace",
+                                            fontSize: 12,
+                                            borderRadius: 2,
+                                            height: 24,
+                                          }}
+                                        />
+                                      </Box>
+                                    )
+                                  )
+                                ) : (
+                                  <Typography
+                                    variant="body2"
+                                    sx={{
+                                      fontSize: 12,
+                                      fontWeight: 500,
+                                      color: "#374151",
+                                    }}
+                                  >
+                                    No queries
+                                  </Typography>
+                                )}
+                              </Stack>
+                            </Box>
+                            {/* Reading */}
+                            <Box ml={2} mb={1.5}>
+                              <Typography
+                                variant="body2"
+                                sx={{
+                                  fontSize: 12,
+                                  fontWeight: 500,
+                                  color: "#374151",
+                                }}
+                              >
+                                Reading
+                              </Typography>
+                              <Stack
+                                direction="row"
+                                spacing={1}
+                                flexWrap="wrap"
+                                mt={1}
+                              >
+                                {Array.isArray(task.reading) &&
+                                task.reading.length > 0 ? (
+                                  task.reading.map((src: any, i: number) => {
+                                    const domain =
+                                      src.domain ||
+                                      (src.url &&
+                                        src.url.match(
+                                          /https?:\/\/(www\.)?([^\/]+)/
+                                        )?.[2]);
+                                    const filename =
+                                      src.type === "local"
+                                        ? src.url.split("/").pop()
+                                        : undefined;
+                                    return (
+                                      <Box
+                                        key={i}
+                                        component="span"
+                                        sx={{ mb: 1 }}
+                                      >
+                                        <Chip
+                                          component={
+                                            src.url &&
+                                            src.url.startsWith("http")
+                                              ? "a"
+                                              : "span"
+                                          }
+                                          href={
+                                            src.url &&
+                                            src.url.startsWith("http")
+                                              ? src.url
+                                              : undefined
+                                          }
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          clickable={
+                                            !!(
+                                              src.url &&
+                                              src.url.startsWith("http")
+                                            )
+                                          }
+                                          icon={getIcon(src.type, domain)}
+                                          label={
+                                            src.type === "local"
+                                              ? filename
+                                              : domain
+                                          }
+                                          title={src.title || src.url}
+                                          sx={{
+                                            bgcolor: "grey.100",
+                                            color: "text.primary",
+                                            fontWeight: 600,
+                                            fontSize: 12,
+                                            borderRadius: 2,
+                                            maxWidth: 140,
+                                            minWidth: 80,
+                                            textOverflow: "ellipsis",
+                                            overflow: "hidden",
+                                            height: 24,
+                                          }}
+                                        />
+                                      </Box>
+                                    );
+                                  })
+                                ) : (
+                                  <Typography
+                                    variant="body2"
+                                    sx={{
+                                      fontSize: 12,
+                                      fontWeight: 500,
+                                      color: "#374151",
+                                    }}
+                                  >
+                                    No sources
+                                  </Typography>
+                                )}
+                              </Stack>
+                            </Box>
+                          </Collapse>
+                        ) : null}
                       </TimelineContent>
                     </TimelineItem>
                   );

@@ -121,3 +121,15 @@ class APIService:
         )
         interactions = result.scalars().all()
         return [InteractionSchema.model_validate(i) for i in interactions]
+
+    async def delete_thread(self, session: AsyncSession, thread_id: str) -> bool:
+        # Try to find the session
+        result = await session.execute(
+            select(SessionMetadataORM).where(SessionMetadataORM.thread_id == thread_id)
+        )
+        session_metadata = result.scalar_one_or_none()
+        if not session_metadata:
+            return False
+        await session.delete(session_metadata)
+        await session.commit()
+        return True
