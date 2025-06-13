@@ -13,7 +13,7 @@
 
 ## Quick Start
 ### Video Demo
-https://github.com/user-attachments/assets/e9c39cde-039f-4ea8-9a9a-d4cd46a3844d
+https://github.com/user-attachments/assets/a7867523-704a-4437-be59-1c52a6d438f2
 
 ### Architecture
 
