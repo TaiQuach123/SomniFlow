@@ -3,6 +3,66 @@ from qdrant_client.models import QueryResponse
 from src.tools.web.scraper.selector import WebPageSnippets
 
 
+def get_rag_sources(rag_results: List[QueryResponse], source_map: dict = {}) -> dict:
+    for rag_result in rag_results:
+        points = rag_result.points
+        for point in points:
+            source = point.payload["metadata"]["source"]
+            if source not in source_map:
+                source_map[source] = {
+                    "title": point.payload["metadata"].get("title", ""),
+                    "description": point.payload["metadata"].get("description", ""),
+                    "chunks": [],
+                }
+            if point.payload["content"] not in source_map[source]["chunks"]:
+                source_map[source]["chunks"].append(point.payload["content"])
+
+    return source_map
+
+
+def format_rag_sources(rag_sources: dict) -> str:
+    formatted_sources = []
+    for i, (source, data) in enumerate(rag_sources.items()):
+        chunks = "\n---\n".join(data["chunks"])
+        formatted_sources.append(
+            f"[{i + 1}] {data['title']}\nSource: {source}\nRetrieved Content:\n\n{chunks}"
+        )
+
+    return "\n\n===\n\n".join(formatted_sources)
+
+
+def get_web_sources(
+    web_search_results: List[List[WebPageSnippets]], source_map: dict = {}
+) -> dict:
+    for search_results in web_search_results:
+        for web_page_result in search_results:
+            url = web_page_result.url
+            if url not in source_map:
+                source_map[url] = {
+                    "title": web_page_result.title,
+                    "description": web_page_result.description,
+                    "snippets": [],
+                }
+
+            for snippet in web_page_result.snippets:
+                if snippet.content not in source_map[url]["snippets"]:
+                    source_map[url]["snippets"].append(snippet.content)
+
+    return source_map
+
+
+def format_web_sources(web_sources: dict, i: int = 0) -> str:
+    formatted_sources = []
+    for source, data in web_sources.items():
+        snippets = "\n---\n".join(data["snippets"])
+        formatted_sources.append(
+            f"[{i + 1}] {data['title']}\nURL: {source}\nDescription: {data['description']}\nRetrieved Content:\n\n{snippets}"
+        )
+        i += 1
+
+    return "\n\n===\n\n".join(formatted_sources)
+
+
 def format_web_results_with_prefix(
     web_search_results: List[List[WebPageSnippets]],
     i: int = 0,

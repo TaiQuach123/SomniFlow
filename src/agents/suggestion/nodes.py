@@ -1,4 +1,5 @@
 import json
+import asyncio
 import logging
 from typing import Literal
 from pydantic_ai import Agent, RunContext
@@ -10,9 +11,10 @@ from src.agents.suggestion.states import SuggestionState
 from src.tools.rag.retrieve import retrieve_batch
 from src.tools.utils.resource_manager import get_resource_manager
 from src.tools.utils.formatters import (
-    format_web_results_with_prefix,
-    format_rag_results_with_prefix,
-    format_rag_results,
+    get_rag_sources,
+    format_rag_sources,
+    get_web_sources,
+    format_web_sources,
 )
 from langgraph.graph import END
 from langgraph.types import Command
@@ -110,34 +112,77 @@ async def retriever(
 ) -> Command[Literal["context_processor_node", END]]:
     logger.info("Suggestion Retriever Node")
     writer = get_stream_writer()
+    writer(json.dumps({"type": "retrievalStart", "data": "Searching RAG"}) + "\n")
+    writer(
+        json.dumps(
+            {
+                "type": "retrievalQueries",
+                "data": state["queries"],
+                "messageId": state["messageId"],
+            }
+        )
+        + "\n"
+    )
 
     rag_results = await retrieve_batch(
         queries=state["queries"],
         collection_name="test",
     )
 
+    rag_sources = get_rag_sources(rag_results, state.get("rag_sources", {}))
+    # writer(
+    #     json.dumps(
+    #         {
+    #             "type": "rag_sources",
+    #             "data": rag_sources,
+    #             "messageId": state["messageId"],
+    #         }
+    #     )
+    #     + "\n"
+    # )
+    writer(json.dumps({"type": "retrievalSources", "data": rag_sources}) + "\n")
+    writer(json.dumps({"type": "retrievalEnd"}) + "\n")
+    print("RAG Sources:", rag_sources.keys())
+    rag_contexts = format_rag_sources(rag_sources)
+
+    writer(
+        json.dumps(
+            {
+                "type": "step",
+                "data": "Local Storage Evaluation",
+                "messageId": state["messageId"],
+            }
+        )
+        + "\n"
+    )
     suggestion_evaluator = create_suggestion_evaluator_agent()
     evaluator_result = await suggestion_evaluator.run(
         "",
         deps=EvaluatorDeps(
             task=state["suggestion_task"],
             queries=state["queries"],
-            contexts=format_rag_results(rag_results),
+            contexts=rag_contexts,
         ),
         model_settings={"temperature": 0.0},
     )
-    rag_contexts, i, rag_source_map = format_rag_results_with_prefix(
-        rag_results,
-        len(state.get("rag_source_map", "")) + len(state.get("web_source_map", "")),
-        state.get("rag_source_map", {}),
-    )
 
     if evaluator_result.output.should_proceed:
+        writer(json.dumps({"type": "sources", "data": [rag_sources]}) + "\n")
+        writer(
+            json.dumps(
+                {
+                    "type": "taskEnd",
+                    "messageId": state["messageId"],
+                    "at_node": "retriever",
+                }
+            )
+            + "\n"
+        )
         return Command(
             goto=END,
             update={
                 "suggestion_context": rag_contexts,
-                "rag_source_map": rag_source_map,
+                "rag_sources": {},
             },
         )
     else:
@@ -146,45 +191,76 @@ async def retriever(
         else:
             search_queries = state["queries"]
 
-        ### Web Search
-        web_search_pipeline = get_resource_manager().web_search_pipeline
-
-        web_results = await web_search_pipeline.search_multiple_queries(
-            queries=search_queries, max_urls=20, max_results=3
-        )
-
-        logger.info(f"Web Results: {web_results}")
-
-        web_contexts, i, web_source_map = format_web_results_with_prefix(
-            web_results, i, state.get("web_source_map", {})
-        )
-
-        web_sources = [
-            {
-                "metadata": {"title": data["title"], "url": source},
-                "pageContent": "\n---\n".join(data["contents"]),
-            }
-            for source, data in web_source_map.items()
-        ]
-
+        writer(json.dumps({"type": "webSearchStart", "data": "Searching Web"}) + "\n")
         writer(
             json.dumps(
                 {
-                    "type": "sources",
-                    "data": web_sources,
+                    "type": "webSearchQueries",
+                    "data": search_queries,
                     "messageId": state["messageId"],
                 }
             )
             + "\n"
         )
+        ### Web Search
+        web_search_pipeline = get_resource_manager().web_search_pipeline
+
+        (
+            unique_url_summaries,
+            per_query_top_results,
+        ) = await web_search_pipeline.gather_top_ranked_urls_for_queries(search_queries)
+
+        writer(
+            json.dumps(
+                {
+                    "type": "webSearchSources",
+                    "data": unique_url_summaries,
+                    "messageId": state["messageId"],
+                }
+            )
+            + "\n"
+        )
+        scrape_task = asyncio.create_task(
+            web_search_pipeline.scrape_unique_urls(per_query_top_results)
+        )
+        embedding_task = asyncio.create_task(
+            web_search_pipeline.get_query_embeddings_for_queries(search_queries)
+        )
+
+        url_to_content, query_embeddings = await asyncio.gather(
+            scrape_task, embedding_task
+        )
+
+        web_results = await web_search_pipeline.extract_relevant_snippets_for_queries(
+            search_queries, per_query_top_results, url_to_content, query_embeddings
+        )
+
+        # logger.info(f"Web Results: {web_results}")
+
+        web_sources = get_web_sources(web_results, state.get("web_sources", {}))
+        web_contexts = format_web_sources(web_sources, len(rag_sources))
+
+        print("Web Sources: ", web_sources.keys())
+
+        # writer(
+        #     json.dumps(
+        #         {
+        #             "type": "sources",
+        #             "data": web_sources,
+        #             "messageId": state["messageId"],
+        #         }
+        #     )
+        #     + "\n"
+        # )
+        writer(json.dumps({"type": "webSearchEnd"}) + "\n")
 
         merged_contexts = "\n\n".join([rag_contexts, web_contexts])
         return Command(
             goto="context_processor_node",
             update={
                 "raw_contexts": merged_contexts,
-                "web_source_map": web_source_map,
-                "rag_source_map": rag_source_map,
+                "web_sources": web_sources,
+                "rag_sources": rag_sources,
             },
         )
 
@@ -194,6 +270,7 @@ async def context_processor_node(
 ) -> Command[Literal["task_handler_node", END]]:
     logger.info("Suggestion Context Processor Node")
     writer = get_stream_writer()
+    writer(json.dumps({"type": "step", "data": "Context Processing"}) + "\n")
     extractor_agent = create_suggestion_extractor_agent()
     extractor_result = await extractor_agent.run(
         "",
@@ -219,10 +296,34 @@ async def context_processor_node(
         model_settings={"temperature": 0.0},
     )
 
-    if reflection_result.output.should_proceed or state.get("loops", 0) > 2:
+    if reflection_result.output.should_proceed or state.get("loops", 0) > 1:
+        writer(
+            json.dumps(
+                {
+                    "type": "sources",
+                    "data": [state["rag_sources"], state["web_sources"]],
+                }
+            )
+            + "\n"
+        )
+        writer(
+            json.dumps(
+                {
+                    "type": "taskEnd",
+                    "messageId": state["messageId"],
+                    "at_node": "context_processor",
+                }
+            )
+            + "\n"
+        )
         return Command(
             goto=END,
-            update={"suggestion_context": extracted_contexts, "loops": 0},
+            update={
+                "suggestion_context": extracted_contexts,
+                "loops": 0,
+                "rag_sources": {},
+                "web_sources": {},
+            },
         )
     else:
         return Command(

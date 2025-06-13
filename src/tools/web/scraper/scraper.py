@@ -22,11 +22,12 @@ class WebScraper:
                     urls=urls, config=self.run_config, dispatcher=dispatcher
                 )
 
-            fit_markdowns = [
-                result.markdown.fit_markdown if result.success else ""
+            url_to_content = {
+                result.url: result.markdown.fit_markdown if result.success else ""
                 for result in results
-            ]
-            return fit_markdowns
+            }
+
+            return url_to_content
 
         except Exception as e:
             print(f"Error crawling URLs: {e}")

@@ -53,12 +53,24 @@ async def supervisor_node(
 ]:
     writer = get_stream_writer()
 
+    writer(json.dumps({"type": "taskStart", "messageId": state["messageId"]}) + "\n")
+
     message_history: list[ModelMessage] = []
     supervisor_agent = create_supervisor_agent()
     for message_row in state["messages"]:
         message_history.extend(ModelMessagesTypeAdapter.validate_json(message_row))
 
     # logger.info(print(message_history))
+    writer(
+        json.dumps(
+            {
+                "type": "step",
+                "data": "Planning...",
+                "messageId": state["messageId"],
+            }
+        )
+        + "\n"
+    )
 
     output = await supervisor_agent.run(
         state["user_input"],
@@ -68,6 +80,18 @@ async def supervisor_node(
 
     if isinstance(output.output, ClarificationRequest):
         logger.info("Clarification Request")
+        writer(
+            json.dumps(
+                {
+                    "type": "taskEnd",
+                    "messageId": state["messageId"],
+                    "at_node": "supervisor",
+                }
+            )
+            + "\n"
+        )
+
+        writer(json.dumps({"type": "messageStart"}) + "\n")
         writer(
             json.dumps(
                 {
@@ -102,6 +126,16 @@ async def supervisor_node(
 
     else:
         if output.output.should_response:
+            writer(
+                json.dumps(
+                    {
+                        "type": "taskEnd",
+                        "messageId": state["messageId"],
+                        "at_node": "supervisor_else",
+                    }
+                )
+                + "\n"
+            )
             return Command(
                 goto="response_agent",
                 update={
