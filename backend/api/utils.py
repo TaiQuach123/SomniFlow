@@ -10,4 +10,3 @@ async def generate_response(query: str, thread_id: str, graph) -> AsyncIterable[
         stream_mode="custom",
     ):
         yield data
-        print("Streaming:", data)

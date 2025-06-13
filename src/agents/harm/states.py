@@ -3,8 +3,8 @@ from typing_extensions import TypedDict
 
 
 class HarmState(TypedDict):
-    rag_source_map: dict
-    web_source_map: dict
+    rag_sources: dict
+    web_sources: dict
     loops: int
     harm_task: str
     feedback: str

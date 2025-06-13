@@ -5,8 +5,22 @@ from typing import Literal
 from pydantic_ai import Agent, RunContext
 from langgraph.config import get_stream_writer
 from src.common.llm import create_llm_agent
-from src.agents.base import *
-from src.agents.suggestion.prompts import *
+from src.agents.base import (
+    TaskHandlerDeps,
+    EvaluatorDeps,
+    ExtractorDeps,
+    ReflectionDeps,
+    TaskHandlerOutput,
+    EvaluatorOutput,
+    ExtractorOutput,
+    ReflectionOutput,
+)
+from src.agents.suggestion.prompts import (
+    suggestion_task_handler_prompt,
+    suggestion_evaluator_prompt,
+    extractor_agent_prompt,
+    reflection_agent_prompt,
+)
 from src.agents.suggestion.states import SuggestionState
 from src.tools.rag.retrieve import retrieve_batch
 from src.tools.utils.resource_manager import get_resource_manager

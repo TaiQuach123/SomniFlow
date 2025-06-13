@@ -28,8 +28,6 @@ export default function Login() {
     setLoading(true);
     setError("");
     try {
-      console.log("Username (email):", email);
-      console.log("Password:", password);
       const body = new URLSearchParams();
       body.append("username", email);
       body.append("password", password);
@@ -47,7 +45,6 @@ export default function Login() {
         return;
       }
       const data = await res.json();
-      console.log("Access Token:", data.access_token);
       localStorage.setItem("access_token", data.access_token);
       setLoading(false);
       router.push("/");

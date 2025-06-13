@@ -50,7 +50,6 @@ export default function ThreadPage() {
     })
       .then((res) => res.json())
       .then((data) => {
-        console.log("Fetched interactions:", data);
         setInteractions(data);
       })
       .catch((err) => console.error("Failed to fetch interactions", err));
@@ -164,7 +163,6 @@ export default function ThreadPage() {
             console.error("Failed to parse event", err, line);
             continue;
           }
-          console.log("[STREAM EVENT] type:", event.type, event);
           switch (event.type) {
             case "taskStart":
               setShowTimeline(true);
@@ -401,8 +399,6 @@ export default function ThreadPage() {
       userMessageTime = latestUserInteraction.created_at;
     }
   }
-
-  console.log("userMessageTime passed to Header:", userMessageTime);
 
   // Deduplicate interactions by id before rendering
   const dedupedInteractions = Array.from(

@@ -3,8 +3,8 @@ from typing_extensions import TypedDict
 
 
 class FactorState(TypedDict):
-    rag_source_map: dict
-    web_source_map: dict
+    rag_sources: dict
+    web_sources: dict
     loops: int
     factor_task: str
     feedback: str
