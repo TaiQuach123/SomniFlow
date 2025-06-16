@@ -85,6 +85,9 @@ async def response_node(state: MainGraphState):
         + "\n"
     )
 
+    print("Merged RAG Sources: ", merged_rag_sources.keys())
+    print("Merged Web Sources: ", merged_web_sources.keys())
+
     contexts = "\n\n===\n\n".join(
         s
         for s in [

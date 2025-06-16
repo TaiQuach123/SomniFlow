@@ -58,11 +58,7 @@ export default function ChatInputBox() {
       <div className="p-2 w-full max-w-2xl border rounded-2xl mt-10">
         <form onSubmit={handleSubmit}>
           <div className="flex items-end justify-between">
-            <Tabs
-              defaultValue={tab}
-              className="w-[400px]"
-              onValueChange={setTab}
-            >
+            <Tabs defaultValue={tab} className="w-full" onValueChange={setTab}>
               <TabsContent value="Search">
                 <input
                   type="text"

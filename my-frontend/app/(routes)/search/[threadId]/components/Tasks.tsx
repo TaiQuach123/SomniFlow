@@ -14,9 +14,39 @@ import {
   Box,
   Typography,
   Stack,
+  Tooltip,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
+import LightbulbIcon from "@mui/icons-material/Lightbulb";
+import ExtensionIcon from "@mui/icons-material/Extension";
+import ShieldIcon from "@mui/icons-material/Shield";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
+
+// Agent UI mapping
+const agentUI = {
+  suggestion: {
+    color: "#e0f2fe",
+    textColor: "#0369a1",
+    icon: <LightbulbIcon fontSize="small" sx={{ color: "#0369a1" }} />,
+    label: "Suggestion",
+    description: "Suggests improvements",
+  },
+  factor: {
+    color: "#dcfce7",
+    textColor: "#166534",
+    icon: <ExtensionIcon fontSize="small" sx={{ color: "#166534" }} />,
+    label: "Factor",
+    description: "Analyzes contributing factors",
+  },
+  harm: {
+    color: "#fee2e2",
+    textColor: "#b91c1c",
+    icon: <ShieldIcon fontSize="small" sx={{ color: "#b91c1c" }} />,
+    label: "Harm",
+    description: "Checks for harm or risk",
+  },
+};
 
 // Utility to normalize tasks by agent, preserving timeline order
 function normalizeTimeline(tasks: any[], activeAgents: string[] = []) {
@@ -309,9 +339,21 @@ export default function Tasks({
           {timeline.map((item, idx) => {
             const isLastTopLevel = idx === timeline.length - 1;
             if (item.type === "agent") {
-              // Render agent section
+              const agent = String(item.agent);
+              const ui = (agentUI as any)[agent] || {
+                color: "#f3f4f6",
+                textColor: "#374151",
+                icon: (
+                  <InfoOutlinedIcon
+                    fontSize="small"
+                    sx={{ color: "#374151" }}
+                  />
+                ),
+                label: agent,
+                description: "Agent",
+              };
               return (
-                <React.Fragment key={item.agent}>
+                <React.Fragment key={agent}>
                   <TimelineItem
                     sx={{
                       minHeight: 48,
@@ -343,31 +385,34 @@ export default function Tasks({
                     </TimelineSeparator>
                     <TimelineContent sx={{ py: 0, minWidth: 0, pl: 0, ml: 2 }}>
                       <Box display="flex" alignItems="center" mb={0.5} mt={0.5}>
-                        <Typography
-                          variant="subtitle1"
-                          sx={{
-                            userSelect: "none",
-                            fontSize: 15,
-                            fontWeight: 700,
-                            color: "#1e293b",
-                          }}
-                        >
-                          {item.agent}
-                        </Typography>
+                        <Tooltip title={ui.description} arrow>
+                          <Chip
+                            icon={ui.icon}
+                            label={ui.label}
+                            sx={{
+                              bgcolor: ui.color,
+                              color: ui.textColor,
+                              fontWeight: 700,
+                              fontSize: 15,
+                              height: 32,
+                              mr: 1,
+                            }}
+                          />
+                        </Tooltip>
                         <IconButton
                           size="small"
                           aria-label="Toggle agent collapse"
-                          onClick={() => toggleAgentCollapse(item.agent)}
+                          onClick={() => toggleAgentCollapse(agent)}
                           sx={{ ml: 1 }}
                         >
-                          {collapsedAgents[item.agent] ? (
+                          {collapsedAgents[agent] ? (
                             <ChevronRightIcon fontSize="small" />
                           ) : (
                             <ExpandMoreIcon fontSize="small" />
                           )}
                         </IconButton>
                       </Box>
-                      <Collapse in={!collapsedAgents[item.agent]}>
+                      <Collapse in={!collapsedAgents[agent]}>
                         <Timeline
                           sx={{
                             p: 0,

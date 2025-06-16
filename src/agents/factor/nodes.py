@@ -111,7 +111,7 @@ def create_factor_reflection_agent() -> Agent:
 
 async def task_handler_node(state: FactorState):
     # logger.info("Factor Task Handler Node")
-    print("=== Factor Task Handler Node ===")
+    # print("=== Factor Task Handler Node ===")
     factor_task_handler_agent = create_factor_task_handler_agent()
     res = await factor_task_handler_agent.run(
         "",
@@ -128,7 +128,7 @@ async def retriever(
     state: FactorState,
 ) -> Command[Literal["context_processor_node", END]]:
     # logger.info("Factor Retriever Node")
-    print("=== Factor Retriever Node ===")
+    # print("=== Factor Retriever Node ===")
     writer = get_stream_writer()
     rag_sources = state.get("rag_sources", {})
     web_sources = state.get("web_sources", {})
@@ -148,7 +148,7 @@ async def retriever(
     else:
         previous_filtered_context = ""
 
-    print("Previous Filtered Context: ", previous_filtered_context)
+    # print("Previous Filtered Context: ", previous_filtered_context)
 
     writer(
         json.dumps(
@@ -180,7 +180,7 @@ async def retriever(
         + "\n"
     )
     writer(json.dumps({"type": "retrievalEnd", "agent": "factor"}) + "\n")
-    print("Factor RAG Sources:", rag_sources.keys())
+    # print("Factor RAG Sources:", rag_sources.keys())
     rag_contexts = format_rag_sources(rag_sources)
 
     writer(
@@ -303,7 +303,7 @@ async def context_processor_node(
     state: FactorState,
 ) -> Command[Literal["task_handler_node", END]]:
     # logger.info("Factor Context Processor Node")
-    print("=== Factor Context Processor Node ===")
+    # print("=== Factor Context Processor Node ===")
     writer = get_stream_writer()
     writer(
         json.dumps({"type": "step", "data": "Context Extraction", "agent": "factor"})
@@ -349,7 +349,7 @@ async def context_processor_node(
     merged_filtered_contexts = "\n\n===\n\n".join(
         [rag_filtered_contexts, web_filtered_contexts]
     )
-    print("Merged Filtered Contexts: ", merged_filtered_contexts)
+    # print("Merged Filtered Contexts: ", merged_filtered_contexts)
 
     reflection_agent = create_factor_reflection_agent()
 
@@ -361,7 +361,7 @@ async def context_processor_node(
         model_settings={"temperature": 0.0},
     )
 
-    print("Reflection Result: ", reflection_result.output.should_proceed)
+    # print("Reflection Result: ", reflection_result.output.should_proceed)
 
     if reflection_result.output.should_proceed or state.get("loops", 0) > 1:
         return Command(

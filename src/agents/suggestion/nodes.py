@@ -111,7 +111,7 @@ def create_suggestion_reflection_agent() -> Agent:
 
 async def task_handler_node(state: SuggestionState):
     # logger.info("Suggestion Task Handler Node")
-    print("=== Suggestion Task Handler Node ===")
+    # print("=== Suggestion Task Handler Node ===")
     suggestion_task_handler_agent = create_suggestion_task_handler_agent()
     res = await suggestion_task_handler_agent.run(
         "",
@@ -128,7 +128,7 @@ async def retriever(
     state: SuggestionState,
 ) -> Command[Literal["context_processor_node", END]]:
     # logger.info("Suggestion Retriever Node")
-    print("=== Suggestion Retriever Node ===")
+    # print("=== Suggestion Retriever Node ===")
     writer = get_stream_writer()
     rag_sources = state.get("rag_sources", {})
     web_sources = state.get("web_sources", {})
@@ -148,7 +148,7 @@ async def retriever(
     else:
         previous_filtered_context = ""
 
-    print("Previous Filtered Context: ", previous_filtered_context)
+    # print("Previous Filtered Context: ", previous_filtered_context)
 
     writer(
         json.dumps(
@@ -182,7 +182,7 @@ async def retriever(
         + "\n"
     )
     writer(json.dumps({"type": "retrievalEnd", "agent": "suggestion"}) + "\n")
-    print("Suggestion RAG Sources:", rag_sources.keys())
+    # print("Suggestion RAG Sources:", rag_sources.keys())
     rag_contexts = format_rag_sources(rag_sources)
 
     writer(
@@ -287,7 +287,7 @@ async def retriever(
 
         # logger.info(f"Web Results: {web_results}")
 
-        web_sources = get_web_sources(web_results, state.get("web_sources", {}))
+        web_sources = get_web_sources(web_results, web_sources)
 
         print("Suggestion Web Sources: ", web_sources.keys())
 
@@ -306,7 +306,7 @@ async def context_processor_node(
     state: SuggestionState,
 ) -> Command[Literal["task_handler_node", END]]:
     # logger.info("Suggestion Context Processor Node")
-    print("=== Suggestion Context Processor Node ===")
+    # print("=== Suggestion Context Processor Node ===")
     writer = get_stream_writer()
     writer(
         json.dumps(
@@ -354,7 +354,7 @@ async def context_processor_node(
     merged_filtered_contexts = "\n\n===\n\n".join(
         [rag_filtered_contexts, web_filtered_contexts]
     )
-    print("Merged Filtered Contexts: ", merged_filtered_contexts)
+    # print("Merged Filtered Contexts: ", merged_filtered_contexts)
 
     reflection_agent = create_suggestion_reflection_agent()
 
@@ -366,7 +366,7 @@ async def context_processor_node(
         model_settings={"temperature": 0.0},
     )
 
-    print("Reflection Result: ", reflection_result.output.should_proceed)
+    # print("Reflection Result: ", reflection_result.output.should_proceed)
 
     if reflection_result.output.should_proceed or state.get("loops", 0) > 1:
         return Command(
