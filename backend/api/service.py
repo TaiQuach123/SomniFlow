@@ -43,7 +43,6 @@ class APIService:
         return result.scalar_one_or_none()
 
     async def get_chat_history_from_checkpointer(self, thread_id, checkpointer):
-        print("Getting chat history from checkpointer")
         messages: List[Message] = []
         config = {"configurable": {"thread_id": thread_id}}
         latest_checkpoint = await checkpointer.aget(config)

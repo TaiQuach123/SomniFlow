@@ -11,11 +11,11 @@ from src.tools.utils.embeddings.api import (
 
 @dataclass
 class SnippetConfig:
-    chunk_size: int = 128
+    chunk_size: int = 384
     chunk_overlap: int = 0
     max_tokens: int = 8192
-    window_size: int = 1
-    top_k: int = 3
+    window_size: int = 0
+    top_k: int = 5
 
 
 @dataclass
@@ -125,6 +125,7 @@ class SemanticSnippetSelector:
         top_k: int = 3,
     ) -> List[tuple[int, int]]:
         sorted_indexes = np.argsort(similarities)[::-1]
+
         length = len(sorted_indexes)
         top_k_sorted_indexes = sorted_indexes[:top_k]
         selected_chunks = set()

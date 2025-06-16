@@ -7,7 +7,7 @@ class MainGraphState(TypedDict):
     suggestion_task: str
     harm_task: str
     factor_task: str
-    suggestion_context: str
-    harm_context: str
-    factor_context: str
+    suggestion_context: dict
+    harm_context: dict
+    factor_context: dict
     messageId: str

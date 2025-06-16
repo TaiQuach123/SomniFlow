@@ -34,7 +34,6 @@ auth_service = AuthService()
 @router.get("/google/login")
 async def login_via_google(request: Request):
     redirect_uri = request.url_for("google_callback")
-    print(redirect_uri)
     return await oauth.google.authorize_redirect(request, redirect_uri)
 
 

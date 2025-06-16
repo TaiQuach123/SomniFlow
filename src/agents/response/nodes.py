@@ -4,6 +4,12 @@ from src.graph.states import MainGraphState
 from src.common.logging import get_logger
 from src.agents.response.prompts import response_agent_prompt
 from langgraph.config import get_stream_writer
+from src.tools.utils.formatters import (
+    merge_rag_sources,
+    merge_web_sources,
+    format_merged_rag_sources,
+    format_merged_web_sources,
+)
 
 from pydantic_ai import Agent, RunContext
 from pydantic_ai.messages import (
@@ -40,17 +46,58 @@ def get_response_agent() -> Agent:
 
 async def response_node(state: MainGraphState):
     writer = get_stream_writer()
-    logger.info("Response Node")
+    # logger.info("Response Node")
+    print("=== Response Node ===")
 
-    contexts = "\n\n".join(
-        [
-            state.get("suggestion_context", ""),
-            state.get("harm_context", ""),
-            state.get("factor_context", ""),
-        ]
+    writer(json.dumps({"type": "step", "data": "Finished"}) + "\n")
+
+    writer(
+        json.dumps(
+            {
+                "type": "taskEnd",
+                "messageId": state["messageId"],
+            }
+        )
+        + "\n"
     )
 
-    contexts = contexts.strip()
+    merged_rag_sources = merge_rag_sources(
+        state.get("suggestion_context", {}).get("rag_sources", {}),
+        state.get("harm_context", {}).get("rag_sources", {}),
+        state.get("factor_context", {}).get("rag_sources", {}),
+    )
+    merged_web_sources = merge_web_sources(
+        state.get("suggestion_context", {}).get("web_sources", {}),
+        state.get("harm_context", {}).get("web_sources", {}),
+        state.get("factor_context", {}).get("web_sources", {}),
+    )
+
+    writer(
+        json.dumps(
+            {
+                "type": "sources",
+                "data": {
+                    "rag_sources": merged_rag_sources,
+                    "web_sources": merged_web_sources,
+                },
+            }
+        )
+        + "\n"
+    )
+
+    print("Merged RAG Sources: ", merged_rag_sources.keys())
+    print("Merged Web Sources: ", merged_web_sources.keys())
+
+    contexts = "\n\n===\n\n".join(
+        s
+        for s in [
+            format_merged_rag_sources(merged_rag_sources),
+            format_merged_web_sources(merged_web_sources, len(merged_rag_sources)),
+        ]
+        if s
+    )
+
+    print("Contexts: ", contexts)
 
     # logger.info(f"Contexts: {contexts}")
 
@@ -92,4 +139,10 @@ async def response_node(state: MainGraphState):
                 ]
             )
         ],
+        "suggestion_task": "",
+        "harm_task": "",
+        "factor_task": "",
+        "suggestion_context": {},
+        "harm_context": {},
+        "factor_context": {},
     }

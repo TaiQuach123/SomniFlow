@@ -24,8 +24,6 @@ export default function Settings() {
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
-    // You can handle save logic here, e.g., send to API or localStorage
-    console.log({ apiKey, framework });
   };
 
   return (

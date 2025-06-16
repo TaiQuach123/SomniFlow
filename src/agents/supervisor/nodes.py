@@ -1,8 +1,6 @@
 from typing import Literal, Union
 import logging
 import json
-import binascii
-import os
 
 from pydantic_ai import Agent
 from pydantic_ai.messages import (
@@ -11,7 +9,6 @@ from pydantic_ai.messages import (
     ModelResponse,
     TextPart,
     ModelRequest,
-    SystemPromptPart,
     UserPromptPart,
 )
 from src.common.llm import create_llm_agent
@@ -66,6 +63,7 @@ async def supervisor_node(
             {
                 "type": "step",
                 "data": "Planning...",
+                "agent": "supervisor",
                 "messageId": state["messageId"],
             }
         )
@@ -85,7 +83,6 @@ async def supervisor_node(
                 {
                     "type": "taskEnd",
                     "messageId": state["messageId"],
-                    "at_node": "supervisor",
                 }
             )
             + "\n"
@@ -126,50 +123,37 @@ async def supervisor_node(
 
     else:
         if output.output.should_response:
+            return Command(
+                goto="response_agent",
+                update={},
+            )
+        else:
+            goto = []
+            active_agents = []
+            if output.output.suggestion_agent:
+                goto.append("suggestion_agent")
+                active_agents.append("suggestion")
+            if output.output.harm_agent:
+                goto.append("harm_agent")
+                active_agents.append("harm")
+            if output.output.factor_agent:
+                goto.append("factor_agent")
+                active_agents.append("factor")
+
             writer(
                 json.dumps(
                     {
-                        "type": "taskEnd",
+                        "type": "activeAgents",
+                        "data": active_agents,
                         "messageId": state["messageId"],
-                        "at_node": "supervisor_else",
                     }
                 )
                 + "\n"
             )
-            return Command(
-                goto="response_agent",
-                update={
-                    # "messages": [
-                    #     ModelMessagesTypeAdapter.dump_json(
-                    #         [
-                    #             ModelRequest(
-                    #                 parts=[UserPromptPart(content=state["user_input"])]
-                    #             )
-                    #         ]
-                    #     ),
-                    # ]
-                },
-            )
-        else:
-            goto = []
-            if output.output.suggestion_agent:
-                goto.append("suggestion_agent")
-            if output.output.harm_agent:
-                goto.append("harm_agent")
-            if output.output.factor_agent:
-                goto.append("factor_agent")
+
             return Command(
                 goto=goto,
                 update={
-                    # "messages": [
-                    #     ModelMessagesTypeAdapter.dump_json(
-                    #         [
-                    #             ModelRequest(
-                    #                 parts=[UserPromptPart(content=state["user_input"])]
-                    #             )
-                    #         ]
-                    #     ),
-                    # ],
                     "suggestion_task": output.output.suggestion_agent,
                     "harm_task": output.output.harm_agent,
                     "factor_task": output.output.factor_agent,

@@ -35,8 +35,6 @@ export default function Register() {
     }
     setLoading(true);
     try {
-      console.log("Register Email:", email);
-      console.log("Register Password:", password);
       const res = await fetch("/auth/register", {
         method: "POST",
         headers: {

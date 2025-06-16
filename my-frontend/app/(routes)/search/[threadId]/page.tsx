@@ -50,7 +50,6 @@ export default function ThreadPage() {
     })
       .then((res) => res.json())
       .then((data) => {
-        console.log("Fetched interactions:", data);
         setInteractions(data);
       })
       .catch((err) => console.error("Failed to fetch interactions", err));
@@ -112,6 +111,7 @@ export default function ThreadPage() {
       sources: [],
       assistant_response: "",
       created_at: new Date().toISOString(),
+      agents: [],
     };
     setStreamingInteraction(newInteraction);
     setUserInput("");
@@ -144,11 +144,14 @@ export default function ThreadPage() {
     let done = false;
     let assistantResponse = "";
     let timeline: any[] = [];
-    let parentTask: any = null;
+    let parentTasks: any = {};
     let messageId = null;
     let tempSources: any[] = [];
     let refCounter = 1;
     let latestSources: any[] = [];
+    let latestAgents: any[] = [];
+    let sourcesEventData: any = null;
+    let taskEnded = false;
 
     while (!done) {
       const { value, done: streamDone } = await reader.read();
@@ -164,119 +167,131 @@ export default function ThreadPage() {
             console.error("Failed to parse event", err, line);
             continue;
           }
-          console.log("[STREAM EVENT] type:", event.type, event);
           switch (event.type) {
             case "taskStart":
               setShowTimeline(true);
               setStructuredTimeline([]);
               timeline = [];
-              parentTask = null;
+              parentTasks = {};
               messageId = event.messageId;
+              taskEnded = false;
               break;
             case "step":
-              // General step
-              timeline.push({ type: "step", label: event.data });
+              if (event.agent) {
+                timeline.push({
+                  type: "step",
+                  label: event.data,
+                  agent: event.agent,
+                });
+              } else {
+                timeline.push({ type: "step", label: event.data });
+              }
               setStructuredTimeline([...timeline]);
               break;
             case "retrievalStart":
-              parentTask = {
-                type: "retrieval",
-                label: event.data || "Searching local storage",
+            case "webSearchStart": {
+              const agent = event.agent || "default";
+              const type =
+                event.type === "retrievalStart" ? "retrieval" : "webSearch";
+              const key = `${type}:${agent}`;
+              parentTasks[key] = {
+                type,
+                agent,
+                label:
+                  event.data ||
+                  (type === "retrieval"
+                    ? "Searching local storage"
+                    : "Searching the web"),
                 searching: [],
                 reading: [],
                 collapsed: false,
               };
-              timeline.push(parentTask);
+              timeline.push(parentTasks[key]);
               setStructuredTimeline([...timeline]);
               break;
+            }
             case "retrievalQueries":
-              if (parentTask && parentTask.type === "retrieval") {
-                parentTask.searching = event.data || [];
+            case "webSearchQueries": {
+              const agent = event.agent || "default";
+              const type =
+                event.type === "retrievalQueries" ? "retrieval" : "webSearch";
+              const key = `${type}:${agent}`;
+              if (parentTasks[key]) {
+                parentTasks[key].searching = event.data || [];
                 setStructuredTimeline([...timeline]);
               }
               break;
+            }
             case "retrievalSources":
-              if (parentTask && parentTask.type === "retrieval") {
-                // Convert object to array of cards for Reading section
+            case "webSearchSources": {
+              const agent = event.agent || "default";
+              const type =
+                event.type === "retrievalSources" ? "retrieval" : "webSearch";
+              const key = `${type}:${agent}`;
+              if (parentTasks[key]) {
                 let readingCards = [];
-                if (
-                  event.data &&
-                  typeof event.data === "object" &&
-                  !Array.isArray(event.data)
-                ) {
-                  Object.entries(event.data).forEach(
-                    ([filename, meta]: any) => {
-                      readingCards.push({
-                        type: "local",
-                        url: filename,
-                        title: meta.title || filename,
-                        description: meta.description || undefined,
-                        icon: "pdf",
-                      });
-                    }
-                  );
-                } else if (Array.isArray(event.data)) {
-                  readingCards = event.data.map((src: any) => ({
+                if (type === "retrieval") {
+                  if (
+                    event.data &&
+                    typeof event.data === "object" &&
+                    !Array.isArray(event.data)
+                  ) {
+                    Object.entries(event.data).forEach(
+                      ([filename, meta]: any) => {
+                        readingCards.push({
+                          type: "local",
+                          url: filename,
+                          title: meta.title || filename,
+                          description: meta.description || undefined,
+                          icon: "pdf",
+                        });
+                      }
+                    );
+                  } else if (Array.isArray(event.data)) {
+                    readingCards = event.data.map((src: any) => ({
+                      ...src,
+                      description: src.description || undefined,
+                    }));
+                  }
+                } else {
+                  readingCards = (event.data || []).map((src: any) => ({
+                    type: "web",
                     ...src,
                     description: src.description || undefined,
                   }));
                 }
-                parentTask.reading = readingCards;
+                parentTasks[key].reading = readingCards;
                 setStructuredTimeline([...timeline]);
               }
               break;
+            }
             case "retrievalEnd":
-              parentTask = null;
+            case "webSearchEnd": {
+              const agent = event.agent || "default";
+              const type =
+                event.type === "retrievalEnd" ? "retrieval" : "webSearch";
+              const key = `${type}:${agent}`;
+              parentTasks[key] = null;
               setStructuredTimeline([...timeline]);
               break;
-            case "webSearchStart":
-              parentTask = {
-                type: "webSearch",
-                label: event.data || "Searching the web",
-                searching: [],
-                reading: [],
-                collapsed: false,
-              };
-              timeline.push(parentTask);
-              setStructuredTimeline([...timeline]);
-              break;
-            case "webSearchQueries":
-              if (parentTask && parentTask.type === "webSearch") {
-                parentTask.searching = event.data || [];
-                setStructuredTimeline([...timeline]);
-              }
-              break;
-            case "webSearchSources":
-              if (parentTask && parentTask.type === "webSearch") {
-                parentTask.reading = (event.data || []).map((src: any) => ({
-                  type: "web",
-                  ...src,
-                  description: src.description || undefined,
-                }));
-                setStructuredTimeline([...timeline]);
-              }
-              break;
-            case "webSearchEnd":
-              parentTask = null;
-              setStructuredTimeline([...timeline]);
-              break;
+            }
             case "sources":
-              console.log(
-                "[SOURCES EVENT] Received sources event:",
-                event.data
-              );
-              // Always treat first element as rag_sources, second as web_sources
-              let rag_sources = {},
-                web_sources = [];
-              if (Array.isArray(event.data)) {
-                rag_sources = event.data[0] || {};
-                web_sources = event.data[1] || [];
-              } else if (event.data && typeof event.data === "object") {
-                rag_sources = event.data.rag_sources || {};
-                web_sources = event.data.web_sources || [];
+              sourcesEventData = event.data;
+              let rag_sources = sourcesEventData.rag_sources || {};
+              let web_sources = sourcesEventData.web_sources || {};
+              // If both are empty, treat as no sources
+              if (
+                Object.keys(rag_sources).length === 0 &&
+                Object.keys(web_sources).length === 0
+              ) {
+                setSourceCards([]);
+                setStreamingSources([]);
+                tempSources = [];
+                latestSources = [];
+                sourcesEventData = null;
+                break;
               }
               let cards: any[] = [];
-              // RAG sources first
               Object.entries(rag_sources).forEach(([filename, meta]: any) => {
                 cards.push({
                   type: "local",
@@ -287,19 +302,7 @@ export default function ThreadPage() {
                   icon: "pdf",
                 });
               });
-              // Web sources
-              (Array.isArray(web_sources)
-                ? web_sources
-                : Object.entries(web_sources)
-              ).forEach((src: any) => {
-                // src can be [url, meta] or an object
-                let url, meta;
-                if (Array.isArray(src)) {
-                  [url, meta] = src;
-                } else {
-                  url = src.url || src;
-                  meta = src;
-                }
+              Object.entries(web_sources).forEach(([url, meta]: any) => {
                 cards.push({
                   type: "web",
                   ref: refCounter++,
@@ -313,14 +316,26 @@ export default function ThreadPage() {
                 });
               });
               setSourceCards(cards);
-              setStreamingSources(cards); // for compatibility
+              setStreamingSources(cards);
               tempSources = cards;
-              latestSources = cards; // Always keep the latest sources
-              console.log("[SOURCES EVENT] Processed cards:", cards);
+              latestSources = cards;
+              sourcesEventData = null;
               break;
             case "taskEnd":
               setShowTimeline(false);
               setShowSkeleton(true);
+              taskEnded = true;
+              break;
+            case "activeAgents":
+              latestAgents = Array.isArray(event.data) ? event.data : [];
+              console.log("AGENTS EVENT", latestAgents);
+              timeline.push({
+                type: "activeAgents",
+                data: [...latestAgents],
+                label: "Active agents updated",
+                timestamp: new Date().toISOString(),
+              });
+              setStructuredTimeline([...timeline]);
               break;
             case "messageStart":
               setShowSkeleton(false);
@@ -333,10 +348,7 @@ export default function ThreadPage() {
               messageId = event.messageId;
               break;
             case "messageEnd":
-              console.log(
-                "[MESSAGE END] latestSources before save:",
-                latestSources
-              );
+              console.log("TIMELINE BEFORE SAVE", timeline);
               setIsStreaming(false);
               setShowTabs(true);
               setStreamingInteraction((prev: any) =>
@@ -346,10 +358,10 @@ export default function ThreadPage() {
                       assistant_response: assistantResponse,
                       tasks: [...timeline],
                       sources: [...latestSources],
+                      agents: [...latestAgents],
                     }
                   : null
               );
-              // POST the new interaction to /api/interactions
               (async () => {
                 try {
                   const accessToken =
@@ -370,9 +382,10 @@ export default function ThreadPage() {
                       assistant_response: assistantResponse,
                       tasks: [...timeline],
                       sources: [...latestSources],
+                      agents: [...latestAgents],
                     }),
                   });
-                  setRefreshInteractions((prev) => prev + 1); // trigger re-fetch
+                  setRefreshInteractions((prev) => prev + 1);
                 } catch (err) {
                   console.error("Failed to save interaction", err);
                 }
@@ -401,8 +414,6 @@ export default function ThreadPage() {
       userMessageTime = latestUserInteraction.created_at;
     }
   }
-
-  console.log("userMessageTime passed to Header:", userMessageTime);
 
   // Deduplicate interactions by id before rendering
   const dedupedInteractions = Array.from(

@@ -117,11 +117,6 @@ class WebSearchPipeline:
         For a given query and its top ranked results, extract relevant snippets using pre-scraped content.
         If query_embedding is provided, use it; otherwise, compute it.
         """
-        if query_embedding is None:
-            query_embedding = await get_api_query_embeddings([query])
-        # If embedding is a list (from batch), get the first
-        if isinstance(query_embedding, list):
-            query_embedding = query_embedding[0]
 
         urls = [result.url for result in top_ranked_results_for_query]
         titles = [result.title for result in top_ranked_results_for_query]
@@ -166,14 +161,12 @@ class WebSearchPipeline:
         queries: List[str],
         per_query_top_results: List[List[BoostedSearXNGSearchResult]],
         url_to_content: Dict[str, str],
-        query_embeddings=None,
+        query_embeddings: None,
     ):
         """
         For each query and its top ranked results, extract relevant snippets using pre-scraped content and precomputed query embeddings if provided.
         Returns a list of lists of snippets, one per query (same order as queries).
         """
-        if query_embeddings is None:
-            query_embeddings = await self.get_query_embeddings_for_queries(queries)
         snippet_tasks = [
             self.extract_relevant_snippets_for_query(
                 query, top_results, url_to_content, query_embedding
