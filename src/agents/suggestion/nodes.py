@@ -42,7 +42,7 @@ from src.common.logging import get_logger
 def create_suggestion_task_handler_agent() -> Agent:
     task_handler_agent = create_llm_agent(
         provider="gemini",
-        model_name="gemini-2.0-flash",
+        model_name="gemini-2.0-flash-lite",
         system_prompt=suggestion_task_handler_prompt,
         result_type=TaskHandlerOutput,
         deps_type=TaskHandlerDeps,
@@ -58,7 +58,7 @@ def create_suggestion_task_handler_agent() -> Agent:
 def create_suggestion_evaluator_agent() -> Agent:
     evaluator_agent = create_llm_agent(
         provider="gemini",
-        model_name="gemini-2.0-flash",
+        model_name="gemini-2.0-flash-lite",
         system_prompt=suggestion_evaluator_prompt,
         result_type=EvaluatorOutput,
         deps_type=EvaluatorDeps,
@@ -96,7 +96,7 @@ def create_suggestion_extractor_agent() -> Agent:
 def create_suggestion_reflection_agent() -> Agent:
     reflection_agent = create_llm_agent(
         provider="gemini",
-        model_name="gemini-2.0-flash",
+        model_name="gemini-2.0-flash-lite",
         system_prompt=reflection_agent_prompt,
         result_type=ReflectionOutput,
         deps_type=ReflectionDeps,

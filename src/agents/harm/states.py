@@ -9,10 +9,9 @@ class HarmState(TypedDict):
     harm_task: str
     feedback: str
     queries: List[str]
-    raw_contexts: str
-    harm_context: str
+    harm_context: dict
     messageId: str
 
 
 class HarmOutputState(TypedDict):
-    harm_context: str
+    harm_context: dict

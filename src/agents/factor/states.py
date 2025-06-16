@@ -9,10 +9,9 @@ class FactorState(TypedDict):
     factor_task: str
     feedback: str
     queries: List[str]
-    raw_contexts: str
-    factor_context: str
+    factor_context: dict
     messageId: str
 
 
 class FactorOutputState(TypedDict):
-    factor_context: str
+    factor_context: dict

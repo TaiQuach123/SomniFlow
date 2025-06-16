@@ -10,12 +10,8 @@ class SuggestionState(TypedDict):
     feedback: str
     queries: List[str]
     suggestion_context: dict
-    # suggestion_rag_context: dict
-    # suggestion_web_context: dict
     messageId: str
 
 
 class SuggestionOutputState(TypedDict):
-    # suggestion_rag_context: dict
-    # suggestion_web_context: dict
     suggestion_context: dict
