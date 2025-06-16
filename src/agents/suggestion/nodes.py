@@ -209,11 +209,6 @@ async def retriever(
     )
 
     if evaluator_result.output.should_proceed:
-        # writer(json.dumps({"type": "sources", "data": [rag_sources]}) + "\n")
-        writer(
-            json.dumps({"type": "step", "data": "Finished", "agent": "suggestion"})
-            + "\n"
-        )
         for source in rag_sources:
             chunks = "\n---\n".join(rag_sources[source]["chunks"])
             rag_sources[source]["filtered_contexts"].append(chunks)
@@ -371,22 +366,9 @@ async def context_processor_node(
         model_settings={"temperature": 0.0},
     )
 
+    print("Reflection Result: ", reflection_result.output.should_proceed)
+
     if reflection_result.output.should_proceed or state.get("loops", 0) > 1:
-        writer(
-            json.dumps({"type": "step", "data": "Finished", "agent": "suggestion"})
-            + "\n"
-        )
-        # Emit sources event after finished
-        writer(
-            json.dumps(
-                {
-                    "type": "sources",
-                    "data": {"rag_sources": rag_sources, "web_sources": web_sources},
-                    "agent": "suggestion",
-                }
-            )
-            + "\n"
-        )
         return Command(
             goto=END,
             update={

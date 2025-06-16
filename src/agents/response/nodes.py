@@ -49,6 +49,8 @@ async def response_node(state: MainGraphState):
     # logger.info("Response Node")
     print("=== Response Node ===")
 
+    writer(json.dumps({"type": "step", "data": "Finished"}) + "\n")
+
     writer(
         json.dumps(
             {
@@ -80,6 +82,7 @@ async def response_node(state: MainGraphState):
                 },
             }
         )
+        + "\n"
     )
 
     contexts = "\n\n===\n\n".join(
@@ -133,4 +136,10 @@ async def response_node(state: MainGraphState):
                 ]
             )
         ],
+        "suggestion_task": "",
+        "harm_task": "",
+        "factor_task": "",
+        "suggestion_context": {},
+        "harm_context": {},
+        "factor_context": {},
     }

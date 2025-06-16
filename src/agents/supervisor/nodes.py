@@ -63,6 +63,7 @@ async def supervisor_node(
             {
                 "type": "step",
                 "data": "Planning...",
+                "agent": "supervisor",
                 "messageId": state["messageId"],
             }
         )
@@ -128,12 +129,28 @@ async def supervisor_node(
             )
         else:
             goto = []
+            active_agents = []
             if output.output.suggestion_agent:
                 goto.append("suggestion_agent")
+                active_agents.append("suggestion")
             if output.output.harm_agent:
                 goto.append("harm_agent")
+                active_agents.append("harm")
             if output.output.factor_agent:
                 goto.append("factor_agent")
+                active_agents.append("factor")
+
+            writer(
+                json.dumps(
+                    {
+                        "type": "activeAgents",
+                        "data": active_agents,
+                        "messageId": state["messageId"],
+                    }
+                )
+                + "\n"
+            )
+
             return Command(
                 goto=goto,
                 update={
