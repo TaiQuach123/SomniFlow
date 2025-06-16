@@ -2,7 +2,7 @@
 
 ### Table of Contents
 - [Quick Start](#quick-start)
-  - [Video Demo](#video-demo)
+  - [Demo](#demo)
   - [Architecture](#architecture)
 - [Introduction](#introduction)
 - [Key Features](#key-features)
@@ -12,8 +12,8 @@
 - [Project Structure](#project-structure)
 
 ## Quick Start
-### Video Demo
-https://github.com/user-attachments/assets/a7867523-704a-4437-be59-1c52a6d438f2
+### Demo
+https://github.com/user-attachments/assets/413d4cd2-e8a5-4d1a-bab7-1813b4cdfd5f
 
 ### Architecture
 
