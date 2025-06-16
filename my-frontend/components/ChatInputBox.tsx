@@ -32,12 +32,19 @@ export default function ChatInputBox() {
   const [tab, setTab] = useState("Search");
   const router = useRouter();
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = (e?: React.FormEvent | React.KeyboardEvent) => {
+    if (e) e.preventDefault();
     if (!input.trim()) return;
     const threadId = uuidv4();
     router.push(`/search/${threadId}?query=${encodeURIComponent(input)}`);
     mutate("/api/chats");
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmit(e);
+    }
   };
 
   return (
@@ -60,21 +67,23 @@ export default function ChatInputBox() {
           <div className="flex items-end justify-between">
             <Tabs defaultValue={tab} className="w-full" onValueChange={setTab}>
               <TabsContent value="Search">
-                <input
-                  type="text"
+                <textarea
                   placeholder="Ask anything..."
-                  className="w-full p-4 rounded-md outline-none"
+                  className="w-full p-4 rounded-md outline-none resize-none min-h-[48px] max-h-40 overflow-auto"
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
+                  rows={1}
+                  onKeyDown={handleKeyDown}
                 />
               </TabsContent>
               <TabsContent value="Research">
-                <input
-                  type="text"
+                <textarea
                   placeholder="Research anything..."
-                  className="w-full p-4 rounded-md outline-none"
+                  className="w-full p-4 rounded-md outline-none resize-none min-h-[48px] max-h-40 overflow-auto"
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
+                  rows={1}
+                  onKeyDown={handleKeyDown}
                 />
               </TabsContent>
               <TabsList>
