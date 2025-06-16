@@ -1,8 +1,6 @@
 from typing import Literal, Union
 import logging
 import json
-import binascii
-import os
 
 from pydantic_ai import Agent
 from pydantic_ai.messages import (
@@ -11,7 +9,6 @@ from pydantic_ai.messages import (
     ModelResponse,
     TextPart,
     ModelRequest,
-    SystemPromptPart,
     UserPromptPart,
 )
 from src.common.llm import create_llm_agent
@@ -85,7 +82,6 @@ async def supervisor_node(
                 {
                     "type": "taskEnd",
                     "messageId": state["messageId"],
-                    "at_node": "supervisor",
                 }
             )
             + "\n"
@@ -126,29 +122,9 @@ async def supervisor_node(
 
     else:
         if output.output.should_response:
-            writer(
-                json.dumps(
-                    {
-                        "type": "taskEnd",
-                        "messageId": state["messageId"],
-                        "at_node": "supervisor_else",
-                    }
-                )
-                + "\n"
-            )
             return Command(
                 goto="response_agent",
-                update={
-                    # "messages": [
-                    #     ModelMessagesTypeAdapter.dump_json(
-                    #         [
-                    #             ModelRequest(
-                    #                 parts=[UserPromptPart(content=state["user_input"])]
-                    #             )
-                    #         ]
-                    #     ),
-                    # ]
-                },
+                update={},
             )
         else:
             goto = []
@@ -161,15 +137,6 @@ async def supervisor_node(
             return Command(
                 goto=goto,
                 update={
-                    # "messages": [
-                    #     ModelMessagesTypeAdapter.dump_json(
-                    #         [
-                    #             ModelRequest(
-                    #                 parts=[UserPromptPart(content=state["user_input"])]
-                    #             )
-                    #         ]
-                    #     ),
-                    # ],
                     "suggestion_task": output.output.suggestion_agent,
                     "harm_task": output.output.harm_agent,
                     "factor_task": output.output.factor_agent,

@@ -20,20 +20,22 @@ class ReflectionOutput(BaseModel):
 
 
 class ExtractedContext(BaseModel):
-    reference_number: int = Field(description="The reference number of the context")
-    title: str = Field(description="The title of the context")
-    url_or_source: str = Field(description="The URL or source of the context")
-    content: str = Field(description="The extracted content from the context")
+    url_or_source: str = Field(
+        description="The URL (for web search) or Source (for local database) where the context was retrieved from"
+    )
+    extracted_context: str = Field(
+        description="The relevant and useful information extracted from the context that helps answer the user query"
+    )
 
 
 class ExtractorOutput(BaseModel):
     extracted_contexts: List[ExtractedContext] = Field(
-        description="The list of extracted contexts"
+        description="A list of all extracted contexts containing only useful information from each source"
     )
 
 
 class ExtractorDeps(BaseModel):
-    task: str = Field(description="A specific task related to insomnia")
+    task: str = Field(description="A specific query related to insomnia")
     contexts: str = Field(
         description="The contexts retrieved from RAG and/or web search"
     )
@@ -66,4 +68,5 @@ class EvaluatorOutput(BaseModel):
 class EvaluatorDeps(BaseModel):
     task: str
     queries: List[str]
-    contexts: str
+    retrieval_results: str
+    previous_filtered_context: str
