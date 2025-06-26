@@ -103,6 +103,21 @@ npm install
 npm run dev
 ```
 
+
+
+
+Convert PDFs to JSON:
+```bash
+python run_data_pipeline.py convert-pdfs <input_folder> --output-root <output_folder>
+```
+
+Extract metadata from JSONs
+```bash
+python run_data_pipeline.py extract-metadata <input_folder>
+```
+
+
+
 8. Open your browser and navigate to http://localhost:3000 to use SomniFlow
 
 ## Project Structure
