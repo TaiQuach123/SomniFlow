@@ -6,17 +6,6 @@ from src.tools.utils.embeddings import get_query_embeddings, get_sparse_embeddin
 from src.tools.utils.resource_manager import get_resource_manager
 
 
-# def format_points(points):
-#     formatted_results = []
-#     for point in points:
-#         formatted_text = f"Title: {point.payload['metadata']['title']}\nSource: {point.payload['metadata']['source']}\nChunk Content: {point.payload['content']}"
-#         formatted_results.append(formatted_text)
-
-#     result = "\n\n---\n\n".join(formatted_results)
-
-#     return result
-
-
 async def retrieve_batch(
     queries: List[str],
     collection_name: str,

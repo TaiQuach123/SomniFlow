@@ -23,6 +23,7 @@ class DataPipelineConfig:
     max_tokens: int = 512
     page_break_placeholder: str = "<!-- PAGE BREAK -->"
     image_description_prompt: str = IMAGE_DESCRIPTION_PROMPT
+    use_remote_services: bool = True
 
 
 data_pipeline_config = DataPipelineConfig()

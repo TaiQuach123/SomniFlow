@@ -44,7 +44,7 @@ class AnnotationImageSerializer(MarkdownPictureSerializer):
         text_parts.append(parent_res.text)
         for annotation in item.annotations:
             if isinstance(annotation, PictureDescriptionData):
-                text_parts.append(f"<!-- Picture description: {annotation.text} -->")
+                text_parts.append(f"Picture description: {annotation.text}")
         text_res = (separator or "\n").join(text_parts)
         return create_ser_result(text=text_res, span_source=item)
 

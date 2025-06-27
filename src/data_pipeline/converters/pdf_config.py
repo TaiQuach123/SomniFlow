@@ -30,11 +30,12 @@ def get_pdf_pipeline_options(
 ) -> PdfPipelineOptions:
     return PdfPipelineOptions(
         do_picture_description=True,
-        enable_remote_services=True,
+        enable_remote_services=data_pipeline_config.use_remote_services,
         generate_picture_images=True,
         images_scale=2,
         picture_description_options=get_picture_description_options(
             model=vision_model_name,
             prompt=prompt,
+            use_api=data_pipeline_config.use_remote_services,
         ),
     )
