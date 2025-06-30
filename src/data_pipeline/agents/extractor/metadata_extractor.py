@@ -1,9 +1,9 @@
 from pydantic_ai import Agent, RunContext
 from src.common.llm import create_llm_agent
-from src.data_pipeline.extractors.base import BaseExtractor
+from src.data_pipeline.agents.extractor.base import BaseExtractor
 from src.data_pipeline.converters.json_to_markdown import JsonToMarkdownConverter
-from src.data_pipeline.extractors.models import DocumentMetadata
-from src.data_pipeline.extractors.prompts import METADATA_EXTRACTOR_PROMPT
+from src.data_pipeline.agents.extractor.models import DocumentMetadata
+from src.data_pipeline.agents.extractor.prompts import METADATA_EXTRACTOR_PROMPT
 
 
 def _create_metadata_extractor_agent() -> Agent:
@@ -22,7 +22,7 @@ def _create_metadata_extractor_agent() -> Agent:
     return agent
 
 
-class LlmMetadataExtractor(BaseExtractor):
+class MetadataExtractor(BaseExtractor):
     def __init__(self):
         self.agent = _create_metadata_extractor_agent()
 

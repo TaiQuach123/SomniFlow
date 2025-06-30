@@ -40,6 +40,28 @@ def main():
         "json_path", type=str, help="Path to the JSON file to chunk."
     )
 
+    # enrich-chunks command
+    enrich_parser = subparsers.add_parser(
+        "enrich-chunks", help="Recursively enrich all _chunks.json files in a folder."
+    )
+    enrich_parser.add_argument(
+        "input_folder", type=str, help="Input folder containing _chunks.json files."
+    )
+    enrich_parser.add_argument(
+        "--chunk-rate-limit",
+        type=int,
+        default=15,
+        help="Max number of chunk enrichments per minute.",
+    )
+
+    # chunk-folder command
+    chunk_folder_parser = subparsers.add_parser(
+        "chunk-folder", help="Recursively chunk all JSON files in a folder."
+    )
+    chunk_folder_parser.add_argument(
+        "input_folder", type=str, help="Input folder containing JSON files."
+    )
+
     args = parser.parse_args()
     pipeline = DataPipeline()
 
@@ -55,6 +77,16 @@ def main():
         chunks = pipeline.create_chunks(args.json_path)
         print(f"Chunks created for '{args.json_path}':")
         print(chunks)
+    elif args.command == "enrich-chunks":
+        asyncio.run(
+            pipeline.enrich_folder_chunks(
+                args.input_folder, chunk_rate_limit=args.chunk_rate_limit
+            )
+        )
+        print(f"Chunks enriched for JSON files in '{args.input_folder}'.")
+    elif args.command == "chunk-folder":
+        pipeline.chunk_folder_jsons(args.input_folder)
+        print(f"All JSON files in '{args.input_folder}' have been chunked.")
     else:
         parser.print_help()
 

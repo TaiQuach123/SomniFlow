@@ -116,6 +116,16 @@ Extract metadata from JSONs
 python run_data_pipeline.py extract-metadata <input_folder>
 ```
 
+Chunk Folder
+```bash
+python run_data_pipeline.py chunk-folder <input_folder>
+```
+
+Enriched Chunks
+```bash
+python run_data_pipeline.py enrich-chunks <input_folder> [--chunk-rate-limit N]
+```
+
 
 
 8. Open your browser and navigate to http://localhost:3000 to use SomniFlow
