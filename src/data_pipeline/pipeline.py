@@ -60,10 +60,15 @@ class DataPipeline:
         json_files = []
         for dirpath, _, filenames in os.walk(input_folder):
             for filename in filenames:
-                if filename.lower().endswith(".json") and not filename.lower().endswith(
+                lower_filename = filename.lower()
+                if lower_filename.endswith(".json") and not lower_filename.endswith(
                     "_metadata.json"
                 ):
-                    json_files.append(os.path.join(dirpath, filename))
+                    base_name = os.path.splitext(filename)[0]
+                    metadata_filename = base_name + "_metadata.json"
+                    metadata_path = os.path.join(dirpath, metadata_filename)
+                    if not os.path.exists(metadata_path):
+                        json_files.append(os.path.join(dirpath, filename))
 
         batch_size = 15
         total_batches = ceil(len(json_files) / batch_size)
@@ -72,6 +77,7 @@ class DataPipeline:
             batch = json_files[batch_idx * batch_size : (batch_idx + 1) * batch_size]
             start_time = asyncio.get_event_loop().time()
             for json_path in batch:
+                print(f"Extracting metadata for {json_path}")
                 metadata = await self.llm_metadata_extractor.extract(json_path)
                 metadata_filename = (
                     os.path.splitext(os.path.basename(json_path))[0] + "_metadata.json"
