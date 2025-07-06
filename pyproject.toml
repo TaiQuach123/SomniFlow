@@ -39,4 +39,5 @@ dependencies = [
     "sqlalchemy>=2.0.41",
     "sqlmodel>=0.0.24",
     "torch>=2.6.0",
+    "torchvision>=0.22.0",
 ]
