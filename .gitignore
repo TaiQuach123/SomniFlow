@@ -66,3 +66,6 @@ next-env.d.ts
 
 database
 extracted_data
+
+temp_extracted_data
+extracted_data_old

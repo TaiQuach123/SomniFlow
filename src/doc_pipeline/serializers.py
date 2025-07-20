@@ -20,7 +20,7 @@ from docling_core.types.doc.document import (
     PictureDescriptionData,
     PictureItem,
 )
-from src.data_pipeline.config import data_pipeline_config
+from src.doc_pipeline.config import document_pipeline_config
 
 
 class AnnotationImageSerializer(MarkdownPictureSerializer):
@@ -59,6 +59,6 @@ class MarkdownChunkingSerializerProvider(ChunkingSerializerProvider):
                 image_mode=ImageRefMode.PLACEHOLDER,
                 image_placeholder="",
                 include_annotations=False,
-                page_break_placeholder=data_pipeline_config.page_break_placeholder,
+                page_break_placeholder=document_pipeline_config.page_break_placeholder,
             ),
         )

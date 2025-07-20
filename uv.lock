@@ -746,6 +746,15 @@ wheels = [
 ]
 
 [[package]]
+name = "diskcache"
+version = "5.6.3"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/3f/21/1c1ffc1a039ddcc459db43cc108658f32c57d271d7289a2794e401d0fdb6/diskcache-5.6.3.tar.gz", hash = "sha256:2c3a3fa2743d8535d832ec61c2054a1641f41775aa7c556758a109941e33e4fc", size = 67916 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/3f/27/4570e78fc0bf5ea0ca45eb1de3818a23787af9b390c0b0a0033a1b8236f9/diskcache-5.6.3-py3-none-any.whl", hash = "sha256:5e31b2d5fbad117cc363ebaf6b689474db18a1f6438bc82358b024abd4c2ca19", size = 45550 },
+]
+
+[[package]]
 name = "distro"
 version = "1.9.0"
 source = { registry = "https://pypi.org/simple" }
@@ -765,7 +774,7 @@ wheels = [
 
 [[package]]
 name = "docling"
-version = "2.38.0"
+version = "2.41.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "beautifulsoup4" },
@@ -794,14 +803,14 @@ dependencies = [
     { name = "tqdm" },
     { name = "typer" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/2c/7d/758301a502fb3ef6d8a05134e638bd53571cf5b37f2535686ff685d81f89/docling-2.38.0.tar.gz", hash = "sha256:077aa16b66b6807d3e50da5e5b2c5016f0fb7768f217a8a8255c76967d9448d1", size = 163672 }
+sdist = { url = "https://files.pythonhosted.org/packages/a2/73/69fb3749c419c846557ef397770e3309ad80898ee41ac957a14b0c8e3a2e/docling-2.41.0.tar.gz", hash = "sha256:94adf5cceb361b63e7e115b6b557f34ee28a5f52e0603f93fe36f98691e9c49e", size = 166338 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/7f/69/8b7b1d7a54342f58d1077cebcafc7544b8c5f770a775771aac5df1c71dba/docling-2.38.0-py3-none-any.whl", hash = "sha256:c6f36aeacd38b4a2eb3780311249cd3be69385da74c4da870c70bb679cc8f328", size = 184949 },
+    { url = "https://files.pythonhosted.org/packages/c1/f3/1be481aac97e3f86dd18991407898c8f64e31dc365e6834ba7e92c4613fd/docling-2.41.0-py3-none-any.whl", hash = "sha256:d7869b1b461f13a386aa92c3d7fe8d596f773c41ddcfc1c8be667d131a0310e5", size = 187496 },
 ]
 
 [[package]]
 name = "docling-core"
-version = "2.38.1"
+version = "2.42.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "jsonref" },
@@ -815,9 +824,9 @@ dependencies = [
     { name = "typer" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/38/f7/33bb17aa13e73722bf18ecfb7f13d6fbfb384c22003209bd72708123b33f/docling_core-2.38.1.tar.gz", hash = "sha256:a0566df2316eec4d22953ca7dac839b926dd57549b4c07ac810e87dbbaf91a10", size = 146276 }
+sdist = { url = "https://files.pythonhosted.org/packages/60/c9/f5555f8efbbbecce858e78791fbe0b9465c3c91ea917a3a3acdb1c3c9887/docling_core-2.42.0.tar.gz", hash = "sha256:cf2bb9e889920bac1d94412bd89c10e647419b6d5f7fe5e6f71ed732eb8f24f6", size = 154657 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/f0/c5/fb2e24602db94ec02cc3ac8eb7b9665f2a5f61ff81866beb67aff95a353a/docling_core-2.38.1-py3-none-any.whl", hash = "sha256:6859313561030503e8b53aec535aa5edb765a679af76ce2e2c60722d78c6c613", size = 151570 },
+    { url = "https://files.pythonhosted.org/packages/0d/e4/685bb1b38ca120fdffc1c24f1ce54229ff996e5cad50a9c9dd39b671cb83/docling_core-2.42.0-py3-none-any.whl", hash = "sha256:0774391f335217a5aec8357977e66b63b6e8c9d821c56103de54c526eab92ed6", size = 158101 },
 ]
 
 [package.optional-dependencies]
@@ -828,7 +837,7 @@ chunking = [
 
 [[package]]
 name = "docling-ibm-models"
-version = "3.6.0"
+version = "3.8.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "docling-core" },
@@ -845,9 +854,9 @@ dependencies = [
     { name = "tqdm" },
     { name = "transformers" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/dc/67/df762264044b91036da27bce2304d78035a38b9060e1a0cef46a98a510c7/docling_ibm_models-3.6.0.tar.gz", hash = "sha256:1ff8ef143d6a41f3d9ae22a2fed297524c3fe45235368e1919962a903b65d9d3", size = 85129 }
+sdist = { url = "https://files.pythonhosted.org/packages/95/9b/67d04fa085f1a99a9ecee5a13d4bd472c82a14c260eedd169feb2c63649b/docling_ibm_models-3.8.1.tar.gz", hash = "sha256:721982f8b64b8bd9acdfb96cc9e0e9162b51a0f318b6c5a9e814f8d1b5b537aa", size = 86083 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/f4/d7/e7ea203d57e4f3eed7d4ccbbdc62e7828ee2ebcf2a9b7f61097537b5c88c/docling_ibm_models-3.6.0-py3-none-any.whl", hash = "sha256:f61a1ca278b55a9dc2570d4c69d62281a1dc9a1e6e08bbab57940b612cab383d", size = 84779 },
+    { url = "https://files.pythonhosted.org/packages/98/3c/85f75b70b5ea277e2f07c4c50c8037c9be61dc272ea55c9576716a7358f7/docling_ibm_models-3.8.1-py3-none-any.whl", hash = "sha256:91ef82c63d497b6b91e8c85e0b7a84f75ec38e3495374bfe6112a71081bf8c2a", size = 86120 },
 ]
 
 [[package]]
@@ -1976,6 +1985,18 @@ wheels = [
 ]
 
 [[package]]
+name = "llama-cpp-python"
+version = "0.3.13"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "diskcache" },
+    { name = "jinja2" },
+    { name = "numpy" },
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/e2/3d/a426f9777301569a17f3c3bf4ecc3755120531c008e4601450eec13c09ac/llama_cpp_python-0.3.13.tar.gz", hash = "sha256:307ce2abf62c7cf574234b8c633978cf92eb1c4b3cfe6babef889d812c298d84", size = 50059668 }
+
+[[package]]
 name = "logfire-api"
 version = "3.14.1"
 source = { registry = "https://pypi.org/simple" }
@@ -2286,6 +2307,7 @@ dependencies = [
     { name = "langchain-text-splitters" },
     { name = "langgraph" },
     { name = "langgraph-checkpoint-postgres" },
+    { name = "llama-cpp-python" },
     { name = "passlib" },
     { name = "peft" },
     { name = "pip" },
@@ -2297,6 +2319,7 @@ dependencies = [
     { name = "pyjwt" },
     { name = "pyppeteer" },
     { name = "qdrant-client" },
+    { name = "rapidocr-onnxruntime" },
     { name = "redis" },
     { name = "regex" },
     { name = "semantic-chunkers" },
@@ -2313,7 +2336,7 @@ requires-dist = [
     { name = "authlib", specifier = ">=1.6.0" },
     { name = "bcrypt", specifier = "==4.0.1" },
     { name = "crawl4ai", specifier = ">=0.5.0.post8" },
-    { name = "docling", specifier = ">=2.38.0" },
+    { name = "docling", specifier = ">=2.41.0" },
     { name = "einops", specifier = ">=0.8.1" },
     { name = "fastapi", specifier = ">=0.115.12" },
     { name = "fastembed", specifier = ">=0.4.2" },
@@ -2325,6 +2348,7 @@ requires-dist = [
     { name = "langchain-text-splitters", specifier = ">=0.3.8" },
     { name = "langgraph", specifier = ">=0.3.31" },
     { name = "langgraph-checkpoint-postgres", specifier = ">=2.0.21" },
+    { name = "llama-cpp-python", specifier = ">=0.3.13" },
     { name = "passlib", specifier = ">=1.7.4" },
     { name = "peft", specifier = ">=0.15.2" },
     { name = "pip", specifier = ">=25.1" },
@@ -2336,6 +2360,7 @@ requires-dist = [
     { name = "pyjwt", specifier = ">=2.10.1" },
     { name = "pyppeteer", specifier = ">=0.0.25" },
     { name = "qdrant-client", specifier = ">=1.12.1" },
+    { name = "rapidocr-onnxruntime", specifier = ">=1.4.4" },
     { name = "redis", specifier = ">=6.2.0" },
     { name = "regex", specifier = ">=2023.12.25" },
     { name = "semantic-chunkers", specifier = ">=0.0.10" },
@@ -2704,6 +2729,23 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/99/b1/318f5d4c482f19c5fcbcde190801bfaaaec23413cda0b88a29f6897448ff/openai-1.75.0.tar.gz", hash = "sha256:fb3ea907efbdb1bcfd0c44507ad9c961afd7dce3147292b54505ecfd17be8fd1", size = 429492 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/80/9a/f34f163294345f123673ed03e77c33dee2534f3ac1f9d18120384457304d/openai-1.75.0-py3-none-any.whl", hash = "sha256:fe6f932d2ded3b429ff67cc9ad118c71327db32eb9d32dd723de3acfca337125", size = 646972 },
+]
+
+[[package]]
+name = "opencv-python"
+version = "4.11.0.86"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "numpy" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/17/06/68c27a523103dad5837dc5b87e71285280c4f098c60e4fe8a8db6486ab09/opencv-python-4.11.0.86.tar.gz", hash = "sha256:03d60ccae62304860d232272e4a4fda93c39d595780cb40b161b310244b736a4", size = 95171956 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/05/4d/53b30a2a3ac1f75f65a59eb29cf2ee7207ce64867db47036ad61743d5a23/opencv_python-4.11.0.86-cp37-abi3-macosx_13_0_arm64.whl", hash = "sha256:432f67c223f1dc2824f5e73cdfcd9db0efc8710647d4e813012195dc9122a52a", size = 37326322 },
+    { url = "https://files.pythonhosted.org/packages/3b/84/0a67490741867eacdfa37bc18df96e08a9d579583b419010d7f3da8ff503/opencv_python-4.11.0.86-cp37-abi3-macosx_13_0_x86_64.whl", hash = "sha256:9d05ef13d23fe97f575153558653e2d6e87103995d54e6a35db3f282fe1f9c66", size = 56723197 },
+    { url = "https://files.pythonhosted.org/packages/f3/bd/29c126788da65c1fb2b5fb621b7fed0ed5f9122aa22a0868c5e2c15c6d23/opencv_python-4.11.0.86-cp37-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:1b92ae2c8852208817e6776ba1ea0d6b1e0a1b5431e971a2a0ddd2a8cc398202", size = 42230439 },
+    { url = "https://files.pythonhosted.org/packages/2c/8b/90eb44a40476fa0e71e05a0283947cfd74a5d36121a11d926ad6f3193cc4/opencv_python-4.11.0.86-cp37-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:6b02611523803495003bd87362db3e1d2a0454a6a63025dc6658a9830570aa0d", size = 62986597 },
+    { url = "https://files.pythonhosted.org/packages/fb/d7/1d5941a9dde095468b288d989ff6539dd69cd429dbf1b9e839013d21b6f0/opencv_python-4.11.0.86-cp37-abi3-win32.whl", hash = "sha256:810549cb2a4aedaa84ad9a1c92fbfdfc14090e2749cedf2c1589ad8359aa169b", size = 29384337 },
+    { url = "https://files.pythonhosted.org/packages/a4/7d/f1c30a92854540bf789e9cd5dde7ef49bbe63f855b85a2e6b3db8135c591/opencv_python-4.11.0.86-cp37-abi3-win_amd64.whl", hash = "sha256:085ad9b77c18853ea66283e98affefe2de8cc4c1f43eda4c100cf9b2721142ec", size = 39488044 },
 ]
 
 [[package]]
@@ -3809,6 +3851,25 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/fc/0a/f9579384aa017d8b4c15613f86954b92a95a93d641cc849182467cf0bb3b/rank_bm25-0.2.2.tar.gz", hash = "sha256:096ccef76f8188563419aaf384a02f0ea459503fdf77901378d4fd9d87e5e51d", size = 8347 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/2a/21/f691fb2613100a62b3fa91e9988c991e9ca5b89ea31c0d3152a3210344f9/rank_bm25-0.2.2-py3-none-any.whl", hash = "sha256:7bd4a95571adadfc271746fa146a4bcfd89c0cf731e49c3d1ad863290adbe8ae", size = 8584 },
+]
+
+[[package]]
+name = "rapidocr-onnxruntime"
+version = "1.4.4"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "numpy" },
+    { name = "onnxruntime" },
+    { name = "opencv-python" },
+    { name = "pillow" },
+    { name = "pyclipper" },
+    { name = "pyyaml" },
+    { name = "shapely" },
+    { name = "six" },
+    { name = "tqdm" },
+]
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/ba/12/1e5497183bdbe782dbb91bad1d0d2297dba4d2831b2652657f7517bfc6df/rapidocr_onnxruntime-1.4.4-py3-none-any.whl", hash = "sha256:971d7d5f223a7a808662229df1ef69893809d8457d834e6373d3854bc1782cbf", size = 14915192 },
 ]
 
 [[package]]

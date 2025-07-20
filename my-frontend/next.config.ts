@@ -10,6 +10,10 @@ const nextConfig: NextConfig = {
       {
         source: '/auth/:path*',
         destination: 'http://localhost:8000/auth/:path*',
+      },
+      {
+        source: '/database/:path*',
+        destination: 'http://localhost:8000/database/:path*',
       }
     ]
   },

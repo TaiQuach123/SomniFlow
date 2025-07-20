@@ -61,7 +61,7 @@ async def supervisor_node(
     writer(
         json.dumps(
             {
-                "type": "step",
+                "type": "planningStart",
                 "data": "Planning...",
                 "agent": "supervisor",
                 "messageId": state["messageId"],
@@ -74,6 +74,18 @@ async def supervisor_node(
         state["user_input"],
         message_history=message_history,
         model_settings={"temperature": 0.0},
+    )
+
+    writer(
+        json.dumps(
+            {
+                "type": "planningEnd",
+                "data": "Planning...",
+                "agent": "supervisor",
+                "messageId": state["messageId"],
+            }
+        )
+        + "\n"
     )
 
     if isinstance(output.output, ClarificationRequest):

@@ -2,7 +2,10 @@ from typing import List
 from transformers import AutoModel
 from fastembed import SparseTextEmbedding
 from qdrant_client import AsyncQdrantClient, models
-from src.tools.utils.embeddings import get_query_embeddings, get_sparse_embeddings
+from src.tools.utils.embeddings import (
+    get_query_embeddings,
+    get_sparse_embeddings,
+)
 from src.tools.utils.resource_manager import get_resource_manager
 
 
@@ -34,7 +37,7 @@ async def retrieve_batch(
                 models.Prefetch(
                     query=query_dense_vectors[i],
                     using="dense",
-                    limit=10,
+                    limit=20,
                 ),
                 models.Prefetch(
                     query=models.SparseVector(
@@ -42,12 +45,12 @@ async def retrieve_batch(
                         values=query_sparse_vectors[i].values.tolist(),
                     ),
                     using="sparse",
-                    limit=10,
+                    limit=20,
                 ),
             ],
             query=models.FusionQuery(fusion=models.Fusion.DBSF),
             with_payload=True,
-            limit=3,
+            limit=5,
         )
 
         requests.append(request)
@@ -55,9 +58,5 @@ async def retrieve_batch(
     search_results = await client.query_batch_points(
         collection_name=collection_name, requests=requests
     )
-
-    # final_results = []
-    # for result in search_results:
-    #     final_results.append(format_points(result.points))
 
     return search_results

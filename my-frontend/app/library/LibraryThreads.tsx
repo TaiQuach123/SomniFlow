@@ -18,6 +18,13 @@ function formatDate(dateStr: string) {
   });
 }
 
+// Utility function to truncate long titles
+function truncateTitle(title: string, maxLength: number = 60) {
+  if (!title) return "";
+  if (title.length <= maxLength) return title;
+  return title.substring(0, maxLength).trim() + "...";
+}
+
 export default function LibraryThreads({
   sessions,
   error,
@@ -124,9 +131,10 @@ export default function LibraryThreads({
                   <div className="flex-1 min-w-0">
                     <Link
                       href={`/search/${session.thread_id}`}
-                      className="font-semibold text-lg text-green-950 group-hover:text-green-800 group-hover:underline truncate max-w-[70%]"
+                      className="font-semibold text-lg text-green-950 group-hover:text-green-800 group-hover:underline"
+                      title={session.title || session.thread_id}
                     >
-                      {session.title || session.thread_id}
+                      {truncateTitle(session.title || session.thread_id)}
                     </Link>
                     <div className="text-gray-400 text-xs flex items-center gap-1 mt-1">
                       <Clock className="w-4 h-4" />

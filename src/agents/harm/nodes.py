@@ -168,7 +168,7 @@ async def retriever(
 
     rag_results = await retrieve_batch(
         queries=state["queries"],
-        collection_name="test",
+        collection_name="harms",
     )
 
     rag_sources = get_rag_sources(rag_results, rag_sources)
@@ -184,7 +184,7 @@ async def retriever(
     writer(
         json.dumps(
             {
-                "type": "step",
+                "type": "evaluationStart",
                 "data": "Local Storage Evaluation",
                 "messageId": state["messageId"],
                 "agent": "harm",
@@ -202,6 +202,18 @@ async def retriever(
             previous_filtered_context=previous_filtered_context,
         ),
         model_settings={"temperature": 0.0},
+    )
+
+    writer(
+        json.dumps(
+            {
+                "type": "evaluationEnd",
+                "data": "Local Storage Evaluation",
+                "messageId": state["messageId"],
+                "agent": "harm",
+            }
+        )
+        + "\n"
     )
 
     if evaluator_result.output.should_proceed:
@@ -305,7 +317,13 @@ async def context_processor_node(
     print("=== Harm Context Processor Node ===")
     writer = get_stream_writer()
     writer(
-        json.dumps({"type": "step", "data": "Context Extraction", "agent": "harm"})
+        json.dumps(
+            {
+                "type": "contextExtractionStart",
+                "data": "Context Extraction",
+                "agent": "harm",
+            }
+        )
         + "\n"
     )
     extractor_agent = create_harm_extractor_agent()
@@ -350,6 +368,22 @@ async def context_processor_node(
     )
     print("Merged Filtered Contexts: ", merged_filtered_contexts)
 
+    writer(
+        json.dumps(
+            {
+                "type": "contextExtractionEnd",
+                "data": "Context Extraction",
+                "agent": "harm",
+            }
+        )
+        + "\n"
+    )
+
+    writer(
+        json.dumps({"type": "reflectionStart", "data": "Reflection", "agent": "harm"})
+        + "\n"
+    )
+
     reflection_agent = create_harm_reflection_agent()
 
     reflection_result = await reflection_agent.run(
@@ -361,6 +395,11 @@ async def context_processor_node(
     )
 
     print("Reflection Result: ", reflection_result.output.should_proceed)
+
+    writer(
+        json.dumps({"type": "reflectionEnd", "data": "Reflection", "agent": "harm"})
+        + "\n"
+    )
 
     if reflection_result.output.should_proceed or state.get("loops", 0) > 1:
         return Command(

@@ -1,9 +1,11 @@
-import torch
 from qdrant_client import AsyncQdrantClient
 from typing import Optional
 from transformers import AutoModel, AutoTokenizer
 from fastembed import SparseTextEmbedding
-from src.tools.utils.embeddings import init_dense_model, init_sparse_model
+from src.tools.utils.embeddings import (
+    init_dense_model,
+    init_sparse_model,
+)
 from src.tools.web.pipeline import WebSearchPipeline
 
 
@@ -15,7 +17,6 @@ class ResourceManager:
             cls._instance = super().__new__(cls)
             cls._instance._dense_model = None
             cls._instance._tokenizer = None
-            cls._instance._passage_adapter_mask = None
             cls._instance._sparse_model = None
             cls._instance._qdrant_client = None
             cls._instance._web_search_pipeline = None
@@ -26,9 +27,7 @@ class ResourceManager:
         """Initialize models if they haven't been initialized yet"""
         if self._dense_model is None:
             print("Initializing dense model...")
-            self._dense_model, self._tokenizer, self._passage_adapter_mask = (
-                init_dense_model(device=device)
-            )
+            self._dense_model, self._tokenizer = init_dense_model(device=device)
 
         if self._sparse_model is None:
             print("Initializing sparse model...")
@@ -51,10 +50,6 @@ class ResourceManager:
     @property
     def tokenizer(self) -> Optional[AutoTokenizer]:
         return self._tokenizer
-
-    @property
-    def passage_adapter_mask(self) -> Optional[torch.Tensor]:
-        return self._passage_adapter_mask
 
     @property
     def sparse_model(self) -> Optional[SparseTextEmbedding]:

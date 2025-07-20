@@ -1,5 +1,4 @@
-METADATA_EXTRACTOR_PROMPT = """
-You are an intelligent assistant designed to extract metadata from the first page of a scientific research article related to insomnia. The input is in markdown format and represents only the first page of the article.
+METADATA_EXTRACTOR_PROMPT = """You are an intelligent assistant designed to extract metadata from the first page of a scientific research article related to insomnia. The input is in markdown format and represents only the first page of the article.
 
 Your task is to extract the following:
 
@@ -17,5 +16,4 @@ Your task is to extract the following:
 Additional Instructions:
 - Ignore any author names, affiliations, contact details, footnotes, references, or URLs.
 - Do not include any markdown syntax (such as `#`, `*`, or backticks) in your output.
-- If the title or abstract is incomplete due to page truncation, extract only what is present without guessing missing parts.
-"""
+- If the title or abstract is incomplete due to page truncation, extract only what is present without guessing missing parts."""

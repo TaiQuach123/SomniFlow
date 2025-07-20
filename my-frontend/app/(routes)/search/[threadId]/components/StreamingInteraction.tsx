@@ -21,6 +21,7 @@ import {
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import Tasks from "./Tasks";
+import { Spinner } from "@/components/ui/spinner";
 
 interface StreamingInteractionProps {
   userQuery: string;
@@ -54,6 +55,21 @@ function getIcon(type: string, domain?: string) {
   );
 }
 
+// Function to get the proper URL for a source
+function getSourceUrl(src: any) {
+  if (src.type === "web") {
+    return src.url;
+  } else if (src.type === "local") {
+    // For local PDF files, remove database/ prefix if it exists to avoid duplication
+    let cleanUrl = src.url;
+    if (cleanUrl.startsWith("database/")) {
+      cleanUrl = cleanUrl.substring(9); // Remove "database/" prefix
+    }
+    return `/database/${cleanUrl}`;
+  }
+  return undefined;
+}
+
 function hasSubtasks(task: any) {
   return (
     (Array.isArray(task.searching) && task.searching.length > 0) ||
@@ -73,18 +89,23 @@ function renderWithCitations(text: string, sources: any[]) {
       parts.push(text.slice(lastIndex, idx));
     }
     const source = sources.find((s: any) => s.ref === refNum);
-    if (source && source.url) {
-      parts.push(
-        <a
-          key={"cite-" + refNum + "-" + idx}
-          href={source.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center justify-center w-5 h-5 mx-0.5 rounded bg-neutral-200 text-neutral-700 text-xs font-medium shadow-sm"
-        >
-          {refNum}
-        </a>
-      );
+    if (source) {
+      const sourceUrl = getSourceUrl(source);
+      if (sourceUrl) {
+        parts.push(
+          <a
+            key={"cite-" + refNum + "-" + idx}
+            href={sourceUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center justify-center w-5 h-5 mx-0.5 rounded bg-neutral-200 text-neutral-700 text-xs font-medium shadow-sm"
+          >
+            {refNum}
+          </a>
+        );
+      } else {
+        parts.push(match[0]);
+      }
     } else {
       parts.push(match[0]);
     }
@@ -136,7 +157,10 @@ export default function StreamingInteraction({
           <Tasks tasks={taskTimeline} />
         ) : showSkeleton ? (
           <div className="w-full my-8">
-            <div className="mb-2 font-semibold">Preparing answer...</div>
+            <div className="mb-2 font-semibold flex items-center gap-2">
+              <Spinner size={16} color="primary" />
+              Preparing answer...
+            </div>
             <div className="w-full">
               <Skeleton className="h-8 w-full mb-2" />
               <Skeleton className="h-8 w-5/6 mb-2" />

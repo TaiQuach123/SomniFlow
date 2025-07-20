@@ -8,6 +8,7 @@ import StreamingInteraction from "./components/StreamingInteraction";
 import { Globe, Paperclip, AudioLines, SearchCheck, Atom } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 
 export default function ThreadPage() {
   const params = useParams();
@@ -271,7 +272,44 @@ export default function ThreadPage() {
               const type =
                 event.type === "retrievalEnd" ? "retrieval" : "webSearch";
               const key = `${type}:${agent}`;
-              parentTasks[key] = null;
+              // Instead of setting to null, mark the task as completed
+              if (parentTasks[key]) {
+                parentTasks[key].completed = true;
+                parentTasks[key].ended = true;
+              }
+              setStructuredTimeline([...timeline]);
+              break;
+            }
+            case "evaluationStart":
+            case "contextExtractionStart":
+            case "reflectionStart":
+            case "planningStart": {
+              const agent = event.agent || "default";
+              const type = event.type.replace("Start", "");
+              const key = `${type}:${agent}`;
+              parentTasks[key] = {
+                type,
+                agent,
+                label: event.data || type,
+                searching: [],
+                reading: [],
+                collapsed: false,
+              };
+              timeline.push(parentTasks[key]);
+              setStructuredTimeline([...timeline]);
+              break;
+            }
+            case "evaluationEnd":
+            case "contextExtractionEnd":
+            case "reflectionEnd":
+            case "planningEnd": {
+              const agent = event.agent || "default";
+              const type = event.type.replace("End", "");
+              const key = `${type}:${agent}`;
+              if (parentTasks[key]) {
+                parentTasks[key].completed = true;
+                parentTasks[key].ended = true;
+              }
               setStructuredTimeline([...timeline]);
               break;
             }
@@ -299,6 +337,7 @@ export default function ThreadPage() {
                   url: filename,
                   title: meta.title || filename,
                   description: meta.description || undefined,
+                  summary: meta.summary || undefined,
                   icon: "pdf",
                 });
               });
@@ -428,14 +467,30 @@ export default function ThreadPage() {
         <div className="w-full max-w-4xl mx-auto px-4">
           <ChatWindow interactions={dedupedInteractions} />
           {isStreaming && (
-            <StreamingInteraction
-              userQuery={streamingInteraction?.user_query || userInput}
-              showTimeline={showTimeline}
-              taskTimeline={structuredTimeline}
-              showSkeleton={showSkeleton}
-              streamedAnswer={streamedAnswer}
-              sources={streamingSources}
-            />
+            <>
+              {/* Show initial loading state when streaming starts but timeline not yet shown */}
+              {!showTimeline && !showSkeleton && !streamedAnswer && (
+                <div className="w-full my-8 px-4">
+                  <div className="mb-2 font-semibold flex items-center gap-2">
+                    <Spinner size={16} color="primary" />
+                    Starting analysis...
+                  </div>
+                  <div className="w-full">
+                    <Skeleton className="h-8 w-full mb-2" />
+                    <Skeleton className="h-8 w-3/4 mb-2" />
+                    <Skeleton className="h-8 w-1/2" />
+                  </div>
+                </div>
+              )}
+              <StreamingInteraction
+                userQuery={streamingInteraction?.user_query || userInput}
+                showTimeline={showTimeline}
+                taskTimeline={structuredTimeline}
+                showSkeleton={showSkeleton}
+                streamedAnswer={streamedAnswer}
+                sources={streamingSources}
+              />
+            </>
           )}
         </div>
       </div>
@@ -464,14 +519,24 @@ export default function ThreadPage() {
             </Tabs>
             <div className="flex-1 flex items-center px-2">
               <div
-                className="w-full cursor-text"
-                onClick={() => inputRef.current && inputRef.current.focus()}
+                className={`w-full ${
+                  isStreaming ? "cursor-not-allowed" : "cursor-text"
+                }`}
+                onClick={() =>
+                  !isStreaming && inputRef.current && inputRef.current.focus()
+                }
               >
                 <input
                   ref={inputRef}
                   type="text"
-                  className="w-full bg-transparent outline-none py-2 text-base placeholder:text-gray-500"
-                  placeholder="Type your message..."
+                  className={`w-full bg-transparent outline-none py-2 text-base ${
+                    isStreaming
+                      ? "placeholder:text-gray-400 text-gray-400"
+                      : "placeholder:text-gray-500"
+                  }`}
+                  placeholder={
+                    isStreaming ? "Processing..." : "Type your message..."
+                  }
                   value={userInput}
                   onChange={(e) => setUserInput(e.target.value)}
                   disabled={isStreaming}
@@ -492,7 +557,11 @@ export default function ThreadPage() {
                 className="bg-blue-500 hover:bg-blue-600 text-white"
                 disabled={isStreaming || !userInput.trim()}
               >
-                <AudioLines className="h-5 w-5" />
+                {isStreaming ? (
+                  <Spinner size={16} color="primary" />
+                ) : (
+                  <AudioLines className="h-5 w-5" />
+                )}
               </Button>
             </div>
           </div>

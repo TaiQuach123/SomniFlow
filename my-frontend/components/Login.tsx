@@ -76,7 +76,7 @@ export default function Login() {
       <Card className="w-full max-w-lg min-h-[42rem]">
         <CardHeader>
           <CardTitle className="text-center text-2xl font-bold">
-            Sign in to Perplexity Clone
+            Sign in to SomniFlow
           </CardTitle>
           <CardDescription className="text-center text-sm">
             Enter your email below to sign in to your account
