@@ -208,18 +208,40 @@ Create a `.env` file in the root directory:
 
 ```bash
 # Backend Configuration
-OPENAI_API_KEY=your_openai_api_key_here
-ANTHROPIC_API_KEY=your_anthropic_api_key_here
+SEARXNG_API_URL="http://localhost:8080"
 
-# Database Configuration
-QDRANT_URL=http://localhost:6333
-REDIS_URL=redis://localhost:6379
 
-# Search Configuration
-SEARXNG_URL=http://localhost:8080
+HF_TOKEN=
+GROQ_API_KEY=
+LOGFIRE_API_KEY=
+JINA_API_KEY=
+GEMINI_API_KEY=
 
-# Frontend Configuration
-NEXT_PUBLIC_API_URL=http://localhost:8000
+
+
+
+JWT_SECRET=
+JWT_ALGORITHM="HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES=30
+REFRESH_TOKEN_EXPIRE_DAYS=7
+
+DATABASE_NAME=
+HOSTNAME=
+USERNAME=
+PASSWORD=
+POSTGRES_DB_URL=
+ASYNC_POSTGRES_DB_URL=
+REDIS_HOST="localhost"
+REDIS_PORT=6379
+
+
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+GOOGLE_ACCESS_TOKEN_URL=https://oauth2.googleapis.com/toke
+GOOGLE_AUTHORIZE_URL=https://accounts.google.com/o/oauth2/auth
+GOOGLE_API_BASE_URL=https://www.googleapis.com/oauth2/v2/
+GOOGLE_USERINFO_ENDPOINT=https://openidconnect.googleapis.com/v2/userinfo
+SESSION_SECRET_KEY=
 ```
 
 ### Service Configuration
@@ -297,19 +319,6 @@ python bulk_upload_chunks.py ./chunks
 
 Once the backend is running, visit [http://localhost:8000/docs](http://localhost:8000/docs) for interactive API documentation.
 
-### Agent Documentation
-
-- [Supervisor Agent](docs/agents/supervisor.md)
-- [Suggestion Agent](docs/agents/suggestion.md)
-- [Harm Assessment Agent](docs/agents/harm.md)
-- [Factor Analysis Agent](docs/agents/factor.md)
-- [Response Agent](docs/agents/response.md)
-
-### Development Documentation
-
-- [Architecture Overview](docs/architecture.md)
-- [Contributing Guidelines](CONTRIBUTING.md)
-- [API Reference](docs/api-reference.md)
 
 ## 🏗️ Project Structure
 
@@ -351,30 +360,6 @@ somniflow/
 ├── 📄 bulk_upload_chunks.py         # Vector store upload script
 └── 📄 README.md                     # This file
 ```
-
-## 🤝 Contributing
-
-We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for details.
-
-### Development Setup
-
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/amazing-feature`
-3. Make your changes
-4. Run tests: `pytest`
-5. Commit your changes: `git commit -m 'Add amazing feature'`
-6. Push to the branch: `git push origin feature/amazing-feature`
-7. Open a Pull Request
-
-### Code Style
-
-- Python: Follow PEP 8 guidelines
-- TypeScript/JavaScript: Use ESLint and Prettier
-- Commit messages: Use conventional commits format
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## 🙏 Acknowledgments
 
