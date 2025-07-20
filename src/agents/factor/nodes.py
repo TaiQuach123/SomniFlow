@@ -170,7 +170,7 @@ async def retriever(
 
     rag_results = await retrieve_batch(
         queries=state["queries"],
-        collection_name="test",
+        collection_name="factors",
     )
 
     rag_sources = get_rag_sources(rag_results, rag_sources)
@@ -186,7 +186,7 @@ async def retriever(
     writer(
         json.dumps(
             {
-                "type": "step",
+                "type": "evaluationStart",
                 "data": "Local Storage Evaluation",
                 "messageId": state["messageId"],
                 "agent": "factor",
@@ -204,6 +204,18 @@ async def retriever(
             previous_filtered_context=previous_filtered_context,
         ),
         model_settings={"temperature": 0.0},
+    )
+
+    writer(
+        json.dumps(
+            {
+                "type": "evaluationEnd",
+                "data": "Local Storage Evaluation",
+                "messageId": state["messageId"],
+                "agent": "factor",
+            }
+        )
+        + "\n"
     )
 
     if evaluator_result.output.should_proceed:
@@ -306,7 +318,13 @@ async def context_processor_node(
     # print("=== Factor Context Processor Node ===")
     writer = get_stream_writer()
     writer(
-        json.dumps({"type": "step", "data": "Context Extraction", "agent": "factor"})
+        json.dumps(
+            {
+                "type": "contextExtractionStart",
+                "data": "Context Extraction",
+                "agent": "factor",
+            }
+        )
         + "\n"
     )
     extractor_agent = create_factor_extractor_agent()
@@ -351,6 +369,22 @@ async def context_processor_node(
     )
     # print("Merged Filtered Contexts: ", merged_filtered_contexts)
 
+    writer(
+        json.dumps(
+            {
+                "type": "contextExtractionEnd",
+                "data": "Context Extraction",
+                "agent": "factor",
+            }
+        )
+        + "\n"
+    )
+
+    writer(
+        json.dumps({"type": "reflectionStart", "data": "Reflection", "agent": "factor"})
+        + "\n"
+    )
+
     reflection_agent = create_factor_reflection_agent()
 
     reflection_result = await reflection_agent.run(
@@ -362,6 +396,11 @@ async def context_processor_node(
     )
 
     # print("Reflection Result: ", reflection_result.output.should_proceed)
+
+    writer(
+        json.dumps({"type": "reflectionEnd", "data": "Reflection", "agent": "factor"})
+        + "\n"
+    )
 
     if reflection_result.output.should_proceed or state.get("loops", 0) > 1:
         return Command(

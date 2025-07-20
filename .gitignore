@@ -64,5 +64,8 @@ yarn-error.log*
 next-env.d.ts
 
 
-./frontend
-node_modules
+database
+extracted_data
+
+temp_extracted_data
+extracted_data_old

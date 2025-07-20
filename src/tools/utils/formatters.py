@@ -11,6 +11,7 @@ def merge_rag_sources(*rag_sources_dicts: dict) -> dict:
                 merged[source] = {
                     "title": data.get("title", ""),
                     "description": data.get("description", ""),
+                    "summary": data.get("summary", ""),
                     "chunks": list(data.get("chunks", [])),
                     "filtered_contexts": list(data.get("filtered_contexts", [])),
                 }
@@ -34,6 +35,7 @@ def get_rag_sources(rag_results: List[QueryResponse], source_map: dict = {}) -> 
                 source_map[source] = {
                     "title": point.payload["metadata"].get("title", ""),
                     "description": point.payload["metadata"].get("description", ""),
+                    "summary": point.payload["metadata"].get("summary", ""),
                     "chunks": [],
                     "filtered_contexts": [],
                 }

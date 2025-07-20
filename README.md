@@ -1,134 +1,386 @@
-<h1 align="center"><b>SomniFlow: Multi-Agent Chatbot System for Insomnia</b></h1>
-
-### Table of Contents
-- [Quick Start](#quick-start)
-  - [Demo](#demo)
-  - [Architecture](#architecture)
-- [Introduction](#introduction)
-- [Key Features](#key-features)
-- [Usage](#usage)
-  - [Prerequisites](#prerequisites)
-  - [Setup](#setup)
-- [Project Structure](#project-structure)
-
-## Quick Start
-### Demo
-https://github.com/user-attachments/assets/413d4cd2-e8a5-4d1a-bab7-1813b4cdfd5f
-
-### Architecture
-
 <div align="center">
-  <table>
-    <tr>
-      <td align="center">
-        <img src="./assets/architecture-diagram.png" alt="System Architecture Diagram" width="450" height="500"/>
-        <br>
-        <em>Figure 1: High-level system architecture</em>
-      </td>
-      <td align="center">
-        <img src="./assets/agent-flow.png" alt="Agent Interaction Flow" width="450" height="500"/>
-        <br>
-        <em>Figure 2: Detailed flow of information between specialized agents</em>
-      </td>
-    </tr>
-  </table>
+  <img src="assets/logo.png" alt="SomniFlow Logo" width="150" height="auto" />
+  <h1>SomniFlow</h1>
+  <p><strong>Multi-Agent Chatbot System for Insomnia</strong></p>
+  <p><em>An advanced multi-agent chatbot system designed to assist users with insomnia-related queries</em></p>
 </div>
 
-SomniFlow uses a multi-agent architecture where specialized agents collaborate to process user queries, retrieve information, and generate insightful, context-aware responses.
+<div align="center">
+  <a href="https://www.python.org/downloads/"><img src="https://img.shields.io/badge/Python-3.12+-blue.svg" alt="Python"></a>
+  <a href="https://fastapi.tiangolo.com/"><img src="https://img.shields.io/badge/FastAPI-0.104+-green.svg" alt="FastAPI"></a>
+  <a href="https://nextjs.org/"><img src="https://img.shields.io/badge/Next.js-14+-black.svg" alt="Next.js"></a>
+  <a href="https://github.com/langchain-ai/langgraph"><img src="https://img.shields.io/badge/LangGraph-0.1+-orange.svg" alt="LangGraph"></a>
+  <a href="https://github.com/crawl4ai/crawl4ai"><img src="https://img.shields.io/badge/Crawl4AI-0.5.0+-purple.svg" alt="Crawl4AI"></a>
+  <a href="https://github.com/docling-ai/docling"><img src="https://img.shields.io/badge/Docling-2.41.0+-teal.svg" alt="Docling"></a>
+</div>
 
-## Introduction
+## 📋 Table of Contents
 
-**SomniFlow** is an advanced multi-agent chatbot system designed to assist users with insomnia-related queries. It leverages LangGraph for orchestrating complex agent workflows and PydanticAI for type-safe LLM interactions. The system is built to provide comprehensive, evidence-based, and context-aware responses by combining local knowledge, real-time web search, and collaborative agent reasoning.
+- [🚀 Quick Start](#-quick-start)
+- [🎯 Introduction](#-introduction)
+- [✨ Key Features](#-key-features)
+- [🏗️ Architecture](#️-architecture)
+- [📦 Installation](#-installation)
+- [🔧 Configuration](#-configuration)
+- [🚀 Usage](#-usage)
+- [📚 Documentation](#-documentation)
+- [🤝 Contributing](#-contributing)
+- [📄 License](#-license)
 
-## Key Features
-- **Perplexity-inspired UI**: The frontend is heavily inspired by the Perplexity AI interface, offering a clean, modern chat experience. It supports:
-  - Streaming of intermediate workflow steps (e.g., planning, retrieval, evaluation)
-  - Real-time streaming of tokens as the answer is generated
-  - Visual timeline of agent actions and retrieval steps
-  - Tabbed views for answers, sources, and workflow tasks
-- **Multi-agent architecture**: Specialized agents (Supervisor, Suggestion, Harm, Factor, Response) work together:
-  - **Supervisor**: Plans and delegates tasks to other agents based on user input and context
-  - **Suggestion**: Provides actionable recommendations for insomnia
-  - **Harm**: Assesses potential harms and negative effects
-  - **Factor**: Identifies contributing factors
-  - **Response**: Synthesizes and delivers the final answer
-- **Retrieval-Augmented Generation (RAG)**: Integrates a local vector database (Qdrant) to retrieve relevant information from curated knowledge bases
-- **Web search integration**: Uses SearXNG for real-time web search, with semantic ranking and snippet extraction for up-to-date information
-- **Streaming backend**: The FastAPI backend streams both intermediate steps and answer tokens to the frontend, enabling a transparent, interactive experience
-- **Contextual understanding**: Agents collaborate and share context, ensuring nuanced, well-rounded responses
-- **Modern tech stack**: FastAPI backend, Next.js frontend, LangGraph, PydanticAI, and robust Docker-based infrastructure
+## 🚀 Quick Start
 
-## Usage
+### Live Demo
+[Watch the demo video](https://github.com/user-attachments/assets/215a984d-56f9-4a87-b60f-b37aecf9616b)
+
+### Quick Setup (5 minutes)
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/yourusername/somniflow.git
+   cd somniflow
+   ```
+
+2. **Start required services with Docker**
+   ```bash
+   # Start Redis
+   docker run -p 6379:6379 -d redis
+   
+   # Start Qdrant vector database
+   docker run -p 6333:6333 -p 6334:6334 -v "$(pwd)/qdrant_storage:/qdrant/storage:z" qdrant/qdrant
+   
+   # Start SearXNG search engine
+   docker run --rm -d -p 8080:8080 \
+     -v ./config/searxng-settings.yml:/etc/searxng/settings.yml \
+     -e "BASE_URL=http://localhost:8080/" \
+     -e "INSTANCE_NAME=somniflow" \
+     searxng/searxng
+   ```
+
+3. **Install and start the backend**
+   ```bash
+   uv sync
+   source .venv/bin/activate
+   uvicorn backend.main:app --reload
+   ```
+
+4. **Install and start the frontend**
+   ```bash
+   cd my-frontend
+   npm install
+   npm run dev
+   ```
+
+5. **Open your browser**
+   Navigate to [http://localhost:3000](http://localhost:3000) to start using SomniFlow!
+
+## 🎯 Introduction
+
+**SomniFlow** is an advanced multi-agent chatbot system specifically designed to assist users with insomnia-related queries. Built with cutting-edge AI technologies, it provides comprehensive, evidence-based, and context-aware responses by combining local knowledge, real-time web search, and collaborative agent reasoning.
+
+### What Makes SomniFlow Special?
+
+- **🤖 Multi-Agent Intelligence**: Five specialized AI agents work together to provide comprehensive insomnia assistance
+- **🔍 Real-Time Research**: Combines local knowledge with live web search for up-to-date information
+- **💬 Natural Conversations**: Perplexity-inspired interface with streaming responses and transparent workflow
+- **🎯 Specialized Focus**: Expert-level knowledge specifically for sleep disorders and insomnia management
+
+## ✨ Key Features
+
+### 🎨 Modern User Interface
+- **Perplexity-inspired design** with clean, intuitive chat experience
+- **Real-time streaming** of both intermediate steps and final answers
+- **Visual timeline** showing agent actions and retrieval steps
+- **Tabbed interface** for answers, sources, and workflow tasks
+- **Mobile-responsive** design for use on any device
+
+### 🤖 Multi-Agent Architecture
+- **Supervisor Agent**: Orchestrates and delegates tasks to specialized agents
+- **Suggestion Agent**: Provides actionable recommendations for insomnia management
+- **Harm Assessment Agent**: Evaluates potential risks and side effects
+- **Factor Analysis Agent**: Identifies contributing factors to sleep issues
+- **Response Agent**: Synthesizes information into comprehensive answers
+
+### 🔍 Advanced Search & Retrieval
+- **RAG Integration**: Local vector database (Qdrant) for curated knowledge retrieval
+- **Web Search**: Real-time information via SearXNG with semantic ranking
+- **Context Awareness**: Agents share context for nuanced, well-rounded responses
+- **Source Attribution**: Transparent citation of information sources
+
+### ⚡ Technical Excellence
+- **FastAPI Backend**: High-performance, async API with streaming support
+- **Next.js Frontend**: Modern React framework with TypeScript
+- **LangGraph Workflows**: Sophisticated agent orchestration
+- **PydanticAI**: Type-safe LLM interactions
+- **Docker Infrastructure**: Easy deployment and scaling
+
+## 🏗️ Architecture
+
+<div align="center">
+  <img src="./assets/high-level.png" alt="System Architecture Diagram" width="600" height="auto"/>
+  <br>
+  <em>Figure 1: High-level system architecture</em>
+  <br><br>
+  <img src="./assets/retrieval-agent.png" alt="Agent Interaction Flow" width="600" height="auto"/>
+  <br>
+  <em>Figure 2: Detailed flow of information within retrieval agents</em>
+</div>
+
+SomniFlow uses a sophisticated multi-agent architecture where specialized agents collaborate to process user queries, retrieve information, and generate insightful, context-aware responses.
+
+### System Components
+
+1. **Frontend Layer**: Next.js application with streaming UI
+2. **API Gateway**: FastAPI backend handling requests and streaming responses
+3. **Agent Orchestration**: LangGraph managing multi-agent workflows
+4. **Knowledge Base**: Qdrant vector database for local knowledge retrieval
+5. **Web Search**: SearXNG for real-time information gathering
+6. **Caching**: Redis for session management and response caching
+
+## 📦 Installation
 
 ### Prerequisites
-1. Docker installed for running Qdrant and SearXNG
-2. Python 3.12+ for the backend
-3. Node.js for the frontend
 
-### Setup
-1. Start Redis:
+- **Docker** (for Qdrant, SearXNG, and Redis)
+- **Python 3.12+** (for backend)
+- **Node.js 18+** (for frontend)
+- **Git** (for cloning the repository)
+
+### Step-by-Step Installation
+
+#### 1. Clone the Repository
 ```bash
-docker run -p 6379:6379 -d redis
+git clone https://github.com/yourusername/somniflow.git
+cd somniflow
 ```
 
-2. Start the Qdrant vector database:
+#### 2. Set Up Backend Environment
 ```bash
-docker run -p 6333:6333 -p 6334:6334 -v "$(pwd)/qdrant_storage:/qdrant/storage:z" qdrant/qdrant
-```
-
-3. Start the SearXNG search engine:
-```bash
-docker run --rm -d -p 8080:8080 -v ./config/searxng-settings.yml:/etc/searxng/settings.yml -e "BASE_URL=http://localhost:8080/" -e "INSTANCE_NAME=my-instance" searxng/searxng
-```
-
-4. Install backend dependencies:
-```bash
+# Install Python dependencies using uv
 uv sync
-```
 
-5. Start the FastAPI backend server:
-```bash
+# Activate virtual environment
 source .venv/bin/activate
-uvicorn backend.main:app --reload
 ```
 
-6. In a separate terminal, navigate to the frontend directory and install dependencies:
+#### 3. Set Up Frontend Environment
 ```bash
 cd my-frontend
 npm install
 ```
 
-7. Start the Next.js frontend:
+#### 4. Start Required Services
 ```bash
+# Start Redis for caching
+docker run -p 6379:6379 -d redis
+
+# Start Qdrant vector database
+docker run -p 6333:6333 -p 6334:6334 \
+  -v "$(pwd)/qdrant_storage:/qdrant/storage:z" \
+  qdrant/qdrant
+
+# Start SearXNG search engine
+docker run --rm -d -p 8080:8080 \
+  -v ./config/searxng-settings.yml:/etc/searxng/settings.yml \
+  -e "BASE_URL=http://localhost:8080/" \
+  -e "INSTANCE_NAME=somniflow" \
+  searxng/searxng
+```
+
+#### 5. Start the Application
+```bash
+# Terminal 1: Start backend
+source .venv/bin/activate
+uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000
+
+# Terminal 2: Start frontend
+cd my-frontend
 npm run dev
 ```
 
-8. Open your browser and navigate to http://localhost:3000 to use SomniFlow
+#### 6. Access the Application
+Open your browser and navigate to [http://localhost:3000](http://localhost:3000)
 
-## Project Structure
+## 🔧 Configuration
+
+### Environment Variables
+
+Create a `.env` file in the root directory:
+
+```bash
+# Backend Configuration
+OPENAI_API_KEY=your_openai_api_key_here
+ANTHROPIC_API_KEY=your_anthropic_api_key_here
+
+# Database Configuration
+QDRANT_URL=http://localhost:6333
+REDIS_URL=redis://localhost:6379
+
+# Search Configuration
+SEARXNG_URL=http://localhost:8080
+
+# Frontend Configuration
+NEXT_PUBLIC_API_URL=http://localhost:8000
+```
+
+### Service Configuration
+
+#### Qdrant Configuration
+The vector database is automatically configured when started with Docker. Data is persisted in the `qdrant_storage` directory.
+
+#### SearXNG Configuration
+Search engine settings are configured in `config/searxng-settings.yml`. Modify this file to customize search behavior.
+
+## 🚀 Usage
+
+### Basic Usage
+
+1. **Start a Conversation**: Type your insomnia-related question in the chat interface
+2. **Watch the Process**: Observe the real-time workflow as agents collaborate
+3. **Review Results**: Check the tabs for answers, sources, and detailed workflow
+4. **Ask Follow-ups**: Continue the conversation with related questions
+
+### Example Queries
+
+- "What are the best natural remedies for insomnia?"
+- "How does blue light affect sleep quality?"
+- "What are the side effects of melatonin supplements?"
+- "How can I create a better sleep environment?"
+- "What causes sleep anxiety and how can I manage it?"
+
+### Document Processing Pipeline
+
+SomniFlow includes a comprehensive document processing pipeline for adding custom knowledge:
+
+#### Parse PDFs to JSON
+```bash
+python run_doc_pipeline.py --step parse-pdfs \
+  --input_dir ./documents \
+  --output_dir ./processed
+```
+
+#### Extract Metadata
+```bash
+python run_doc_pipeline.py --step generate-metadata \
+  --input_dir ./processed \
+  --output_dir ./metadata
+```
+
+#### Chunk Documents
+```bash
+python run_doc_pipeline.py --step chunk-documents \
+  --input_dir ./metadata \
+  --output_dir ./chunks
+```
+
+#### Full Processing Pipeline
+```bash
+python run_doc_pipeline.py --step all \
+  --input_dir ./documents \
+  --output_dir ./processed
+```
+
+#### Upload to Vector Store
+```bash
+python bulk_upload_chunks.py ./chunks
+```
+
+### Advanced Features
+
+- **Session Management**: Conversations are automatically saved and can be resumed
+- **Source Verification**: All information is attributed to reliable sources
+- **Custom Knowledge**: Add your own documents to the knowledge base
+- **Export Conversations**: Download chat history for reference
+
+## 📚 Documentation
+
+### API Documentation
+
+Once the backend is running, visit [http://localhost:8000/docs](http://localhost:8000/docs) for interactive API documentation.
+
+### Agent Documentation
+
+- [Supervisor Agent](docs/agents/supervisor.md)
+- [Suggestion Agent](docs/agents/suggestion.md)
+- [Harm Assessment Agent](docs/agents/harm.md)
+- [Factor Analysis Agent](docs/agents/factor.md)
+- [Response Agent](docs/agents/response.md)
+
+### Development Documentation
+
+- [Architecture Overview](docs/architecture.md)
+- [Contributing Guidelines](CONTRIBUTING.md)
+- [API Reference](docs/api-reference.md)
+
+## 🏗️ Project Structure
 
 ```
-multi-agent-chatbot-system-for-insomnia/
-├── config/                          # Configuration files
-├── src/
-│   ├── agents/                      # Multi-agent system components
-│   │   ├── base/                    # Base classes and shared models
-│   │   ├── factor/                  # Factor analysis agent
-│   │   ├── harm/                    # Harm assessment agent
-│   │   ├── response/                # Response generation agent
-│   │   ├── suggestion/              # Suggestion generation agent
-│   │   └── supervisor/              # Main supervisor agent
-│   ├── common/                      # Shared utilities
-│   │   ├── llm/                     # LLM integration
-│   │   └── logging/                 # Logging setup
-│   ├── graph/                       # LangGraph workflow
-│   ├── lmchunker/                   # Language model chunking
-│   └── tools/                       # Various tools
-│       ├── utils/                   # Utility functions
-│       ├── rag/                     # Retrieval-augmented generation
-│       └── web/                     # Web-related tools
-│           ├── scraper/             # Web scraping functionality
-│           └── search/              # Web search functionality
-├── main.py                          # FastAPI server entry point
-└── vectorstore.py                   # Vector store operations
+somniflow/
+├── 📁 assets/                       # Images and static assets
+├── 📁 backend/                      # FastAPI backend application
+│   ├── 📁 api/                      # API routes and handlers
+│   ├── 📁 auth/                     # Authentication system
+│   └── main.py                      # FastAPI application entry point
+├── 📁 config/                       # Configuration files
+│   ├── logging_dict_config.json     # Logging configuration
+│   └── searxng-settings.yml         # SearXNG search engine settings
+├── 📁 my-frontend/                  # Next.js frontend application
+│   ├── 📁 app/                      # Next.js app directory
+│   ├── 📁 components/               # React components
+│   ├── 📁 hooks/                    # Custom React hooks
+│   └── 📁 lib/                      # Utility libraries
+├── 📁 src/                          # Core application logic
+│   ├── 📁 agents/                   # Multi-agent system components
+│   │   ├── 📁 base/                 # Base classes and shared models
+│   │   ├── 📁 factor/               # Factor analysis agent
+│   │   ├── 📁 harm/                 # Harm assessment agent
+│   │   ├── 📁 response/             # Response generation agent
+│   │   ├── 📁 suggestion/           # Suggestion generation agent
+│   │   └── 📁 supervisor/           # Main supervisor agent
+│   ├── 📁 common/                   # Shared utilities
+│   │   ├── 📁 llm/                  # LLM integration
+│   │   └── 📁 logging/              # Logging setup
+│   ├── 📁 doc_pipeline/             # Document processing pipeline
+│   ├── 📁 graph/                    # LangGraph workflow definitions
+│   └── 📁 tools/                    # Various tools and utilities
+│       ├── 📁 rag/                  # Retrieval-augmented generation
+│       ├── 📁 utils/                # Utility functions
+│       └── 📁 web/                  # Web scraping and search tools
+├── 📄 pyproject.toml                # Python project configuration
+├── 📄 uv.lock                       # Dependency lock file
+├── 📄 run_doc_pipeline.py           # Document processing script
+├── 📄 bulk_upload_chunks.py         # Vector store upload script
+└── 📄 README.md                     # This file
 ```
+
+## 🤝 Contributing
+
+We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for details.
+
+### Development Setup
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/amazing-feature`
+3. Make your changes
+4. Run tests: `pytest`
+5. Commit your changes: `git commit -m 'Add amazing feature'`
+6. Push to the branch: `git push origin feature/amazing-feature`
+7. Open a Pull Request
+
+### Code Style
+
+- Python: Follow PEP 8 guidelines
+- TypeScript/JavaScript: Use ESLint and Prettier
+- Commit messages: Use conventional commits format
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- [LangGraph](https://github.com/langchain-ai/langchain) for the multi-agent framework
+- [Perplexity AI](https://perplexity.ai/) for UI inspiration
+- [FastAPI](https://fastapi.tiangolo.com/) for the backend framework
+- [Next.js](https://nextjs.org/) for the frontend framework
+
+

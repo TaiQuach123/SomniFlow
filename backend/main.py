@@ -1,5 +1,6 @@
 import os
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
 from backend.database import init_db
 from backend.redis import close_redis
@@ -48,7 +49,11 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["Content-Disposition"],
 )
+
+# Mount static files for database folder
+app.mount("/database", StaticFiles(directory="database"), name="database")
 
 app.include_router(auth_router)
 app.include_router(api_router)

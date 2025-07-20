@@ -11,7 +11,7 @@ from src.tools.utils.embeddings.api import (
 
 @dataclass
 class SnippetConfig:
-    chunk_size: int = 384
+    chunk_size: int = 512
     chunk_overlap: int = 0
     max_tokens: int = 8192
     window_size: int = 0
@@ -165,6 +165,59 @@ class SemanticSnippetSelector:
         content = self._get_combined_content(web_page_snippets.snippets)
         return f"{title}\nURL: {url}\nDescription: {description}\n\n{content}\n===\n"
 
+    @staticmethod
+    def _validate_content(context: str) -> str:
+        """Validate and clean content before processing."""
+        if not context or not context.strip():
+            raise ValueError("Context is empty or contains only whitespace")
+
+        # Check for content length
+        if len(context) > 1000000:  # 1MB limit
+            print(
+                f"Warning: Content is very large ({len(context)} characters), truncating..."
+            )
+            context = context[:1000000]
+
+        # Check for problematic characters
+        problematic_chars = [
+            "\x00",
+            "\x01",
+            "\x02",
+            "\x03",
+            "\x04",
+            "\x05",
+            "\x06",
+            "\x07",
+            "\x08",
+            "\x0b",
+            "\x0c",
+            "\x0e",
+            "\x0f",
+            "\x10",
+            "\x11",
+            "\x12",
+            "\x13",
+            "\x14",
+            "\x15",
+            "\x16",
+            "\x17",
+            "\x18",
+            "\x19",
+            "\x1a",
+            "\x1b",
+            "\x1c",
+            "\x1d",
+            "\x1e",
+            "\x1f",
+        ]
+
+        for char in problematic_chars:
+            if char in context:
+                print(f"Warning: Found problematic character in content, removing...")
+                context = context.replace(char, "")
+
+        return context
+
     async def select_snippets(
         self,
         query: str,
@@ -189,6 +242,15 @@ class SemanticSnippetSelector:
         if not query.strip():
             raise ValueError("Query cannot be empty")
 
+        if not context.strip():
+            raise ValueError("Context cannot be empty")
+
+        if query_embedding is None or query_embedding.size == 0:
+            raise ValueError("Query embedding cannot be empty")
+
+        # Validate and clean content
+        context = self._validate_content(context)
+
         # Apply any option overrides
         if options:
             config = SnippetConfig(**{**self.config.__dict__, **options})
@@ -200,8 +262,20 @@ class SemanticSnippetSelector:
             chunks = self._create_chunks(
                 context, config.chunk_size, config.chunk_overlap
             )
+
+            if not chunks:
+                raise ValueError("No chunks created from context")
+
+            print(f"Created {len(chunks)} chunks from context (length: {len(context)})")
+
             enriched_chunks = self._enrich_chunks(chunks)
             chunk_batches = self._create_batches(enriched_chunks, config.max_tokens)
+
+            if not chunk_batches:
+                raise ValueError("No chunk batches created")
+
+            print(f"Created {len(chunk_batches)} batches for embedding")
+
             # Get embeddings for all chunks - create and start tasks immediately
             embedding_tasks = [
                 asyncio.create_task(get_api_passage_embeddings(batch))
@@ -209,13 +283,34 @@ class SemanticSnippetSelector:
             ]
 
             # Await all embedding tasks
-            batch_embeddings_list = await asyncio.gather(*embedding_tasks)
+            batch_embeddings_list = await asyncio.gather(
+                *embedding_tasks, return_exceptions=True
+            )
+
+            # Check for exceptions in embedding tasks
+            for i, result in enumerate(batch_embeddings_list):
+                if isinstance(result, Exception):
+                    error_details = str(result)
+                    if not error_details.strip():
+                        error_details = f"Unknown error in embedding task {i}"
+                    print(f"Batch {i} failed: {error_details}")
+                    print(
+                        f"Batch {i} content preview: {chunk_batches[i][:100] if chunk_batches[i] else 'Empty batch'}..."
+                    )
+                    raise Exception(f"Embedding task {i} failed: {error_details}")
 
             # Efficiently combine all embeddings at once
             all_chunk_embeddings = (
                 np.vstack(batch_embeddings_list)
                 if batch_embeddings_list
                 else np.empty((0, 1024))
+            )
+
+            if all_chunk_embeddings.size == 0:
+                raise ValueError("No embeddings generated")
+
+            print(
+                f"Successfully generated embeddings with shape: {all_chunk_embeddings.shape}"
             )
 
             # Calculate similarities
@@ -241,6 +336,8 @@ class SemanticSnippetSelector:
                 )
                 snippets.append(snippet)
 
+            print(f"Created {len(snippets)} snippets")
+
             web_page_snippets = WebPageSnippets(
                 url=url, title=title, description=description, snippets=snippets
             )
@@ -248,4 +345,6 @@ class SemanticSnippetSelector:
             return web_page_snippets
 
         except Exception as e:
-            raise Exception(f"Error selecting snippets: {e}")
+            error_msg = f"Error selecting snippets for URL {url}: {str(e)}"
+            print(error_msg)
+            raise Exception(error_msg)

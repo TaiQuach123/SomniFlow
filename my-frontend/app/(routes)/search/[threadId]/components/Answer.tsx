@@ -7,6 +7,21 @@ interface Source {
   [key: string]: any;
 }
 
+// Function to get the proper URL for a source
+function getSourceUrl(src: any) {
+  if (src.type === "web") {
+    return src.url;
+  } else if (src.type === "local") {
+    // For local PDF files, remove database/ prefix if it exists to avoid duplication
+    let cleanUrl = src.url;
+    if (cleanUrl.startsWith("database/")) {
+      cleanUrl = cleanUrl.substring(9); // Remove "database/" prefix
+    }
+    return `/database/${cleanUrl}`;
+  }
+  return undefined;
+}
+
 function renderWithCitations(text: string, sources: Source[]) {
   const citationRegex = /\[(\d+)\]/g;
   const parts: React.ReactNode[] = [];
@@ -19,18 +34,23 @@ function renderWithCitations(text: string, sources: Source[]) {
       parts.push(text.slice(lastIndex, idx));
     }
     const source = sources.find((s) => s.ref === refNum);
-    if (source && source.url) {
-      parts.push(
-        <a
-          key={"cite-" + refNum + "-" + idx}
-          href={source.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center justify-center w-5 h-5 mx-0.5 rounded bg-neutral-200 text-neutral-700 text-xs font-medium shadow-sm"
-        >
-          {refNum}
-        </a>
-      );
+    if (source) {
+      const sourceUrl = getSourceUrl(source);
+      if (sourceUrl) {
+        parts.push(
+          <a
+            key={"cite-" + refNum + "-" + idx}
+            href={sourceUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center justify-center w-5 h-5 mx-0.5 rounded bg-neutral-200 text-neutral-700 text-xs font-medium shadow-sm"
+          >
+            {refNum}
+          </a>
+        );
+      } else {
+        parts.push(match[0]);
+      }
     } else {
       parts.push(match[0]);
     }
