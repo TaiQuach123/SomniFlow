@@ -24,8 +24,6 @@
 - [🔧 Configuration](#-configuration)
 - [🚀 Usage](#-usage)
 - [📚 Documentation](#-documentation)
-- [🤝 Contributing](#-contributing)
-- [📄 License](#-license)
 
 ## 🚀 Quick Start
 
