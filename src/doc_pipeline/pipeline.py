@@ -6,6 +6,9 @@ from src.doc_pipeline.parser.pdf_parser import PdfParser
 from src.doc_pipeline.llms import MetadataExtractor, DocumentMetadata
 from src.doc_pipeline.utils import get_first_page_content
 from docling_core.types.doc import DoclingDocument
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 class DocumentExtractionPipeline:
