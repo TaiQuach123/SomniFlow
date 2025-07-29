@@ -30,7 +30,7 @@
 ## 🚀 Quick Start
 
 ### Live Demo
-[Watch the demo video](https://github.com/user-attachments/assets/215a984d-56f9-4a87-b60f-b37aecf9616b)
+[Watch the demo video](https://github.com/user-attachments/assets/c86b79a7-9868-4fbb-9daf-1cb7135bf0be)
 
 ### Quick Setup (5 minutes)
 
